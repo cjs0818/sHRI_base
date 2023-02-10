@@ -37,7 +37,6 @@ conda install -c anaconda pyaudio
 Initialize and authorize the Google Cloud Account using json key file.
 Edit 
 ```
-set GOOGLE_APPLICATION_CREDENTIALS=/home/USERNAME/DOWNLOAD-FOLDER/gcloud-key-filename.json
 export GOOGLE_APPLICATION_CREDENTIALS=/home/USERNAME/DOWNLOAD-FOLDER/gcloud-key-filename.json
 ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file="/home/USERNAME/DOWNLOAD-FOLDER/gcloud-key-filename.json"
 ```
