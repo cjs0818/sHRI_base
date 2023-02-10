@@ -65,13 +65,19 @@
   ```
 </br>
 
-## 1.4. Make or Clone "HRI" folder in Home.
+## 1.4. Make or Clone "sHRI_base" folder in Home.
 
-* All modules worked and ran from HRI folder within Home path.
+* All modules worked and ran from sHRI_base folder within Home path.
   ```
   git clone https://github.com/cjs0818/sHRI_base.git
-  cd HRI
+  cd sHRI_base
   ```
+
+* Add the downloaded foler ($sHRI_base_HOME) to PYTHONPATH
+  ```
+  export PYTHONPATH=$sHRI_base_HOME:$PYTHONPATH
+  ```
+  (It is recommended to put this in ~/.bashrc)
 
 </br>
 
