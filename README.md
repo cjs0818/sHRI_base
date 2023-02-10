@@ -89,7 +89,7 @@
 
 # 4. Face & Emotion Recognition Module Setting
 
-[Follow the Realtime Face Detection and Emotion Recognition Module setting guide.](https://github.com/Wcjs0818/sHRI_base/tree/main/FaceDetEmo)
+[Follow the Realtime Face Detection and Emotion Recognition Module setting guide.](https://github.com/cjs0818/sHRI_base/tree/main/FaceDetEmo)
 
 </br>
 
