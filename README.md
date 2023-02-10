@@ -69,7 +69,7 @@
 
 * All modules worked and ran from HRI folder within Home path.
   ```
-  git clone https://github.com/WoongDemianPark/HRI.git
+  git clone https://github.com/cjs0818/sHRI_base.git
   cd HRI
   ```
 
@@ -77,37 +77,37 @@
 
 # 2. MicArray Module Setting
 
-[Follow the MicArray Module setting guide.](https://github.com/WoongDemianPark/HRI/tree/main/MicArray)
+[Follow the MicArray Module setting guide.](https://github.com/cjs0818/sHRI_base/tree/main/MicArray)
 
 </br>
 
 # 3. Speaker Diarization (diart) Module Setting
 
-[Follow the Speaker Diarazation (diart) Module setting guide.](https://github.com/WoongDemianPark/HRI/tree/main/diart)
+[Follow the Speaker Diarazation (diart) Module setting guide.](https://github.com/cjs0818/sHRI_base/tree/main/diart)
 
 </br>
 
 # 4. Face & Emotion Recognition Module Setting
 
-[Follow the Realtime Face Detection and Emotion Recognition Module setting guide.](https://github.com/WoongDemianPark/HRI/tree/main/FaceDetEmo)
+[Follow the Realtime Face Detection and Emotion Recognition Module setting guide.](https://github.com/Wcjs0818/sHRI_base/tree/main/FaceDetEmo)
 
 </br>
 
 # 5. Robot Facial Expression Module Setting
 
-[Follow the Robot Facial Expression Module setting guide.](https://github.com/WoongDemianPark/HRI/tree/main/FacialExpression)
+[Follow the Robot Facial Expression Module setting guide.](https://github.com/cjs0818/sHRI_base/tree/main/FacialExpression)
 
 </br>
 
 # 6. Combined Robot Facial Module Setting
 
-[Follow Face Detection/Recognition/Expression Module setting guide.](https://github.com/WoongDemianPark/HRI/tree/main/FacialDetExp)
+[Follow Face Detection/Recognition/Expression Module setting guide.](https://github.com/cjs0818/sHRI_base/tree/main/FacialDetExp)
 
 </br>
 
 # 7. Speech to Text Module Setting
 
-[Follow the Speech to Text Module setting guide.](https://github.com/WoongDemianPark/HRI/tree/main/STT)
+[Follow the Speech to Text Module setting guide.](https://github.com/cjs0818/sHRI_base/tree/main/STT)
 
 </br>
 
