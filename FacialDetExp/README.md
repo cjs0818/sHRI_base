@@ -55,7 +55,7 @@ External Download link: https://drive.google.com/file/d/1SLiSQpYMpjUEMYHDg_dBu3f
 Internal Download link: http://gofile.me/3ZpsR/to38xWBfu
 ```
 
-Download weight files, extract and save it into '~/HOME/.deepface/weight/'
+Download weight files, extract and save it into '~/.deepface/weights/'
 ```
 External Download link: work on progress
 Internal Download link: http://gofile.me/3ZpsR/3UXBLajVv
