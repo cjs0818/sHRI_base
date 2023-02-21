@@ -28,6 +28,8 @@ from __future__ import division
 import re
 import sys
 
+import threading, time
+from diart import stream
 from stt import stt_module
 
 from google.cloud import speech
@@ -41,30 +43,23 @@ RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
 
 
-
-def main():
+def script_stt(language_code):
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
-    language_code = 'ko-KR'  # a BCP-47 language tag
+    #language_code = 'ko-KR'  # a BCP-47 language tag
 
-    client = speech.SpeechClient()
-    config = speech.RecognitionConfig(
-        encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-        sample_rate_hertz=RATE,
-        language_code=language_code)
-    streaming_config = speech.StreamingRecognitionConfig(
-        config=config,
-        interim_results=True)
+    stt_module.main()
 
-    with stt_module.MicrophoneStream(RATE, CHUNK) as stream:
-        audio_generator = stream.generator()
-        requests = (speech.StreamingRecognizeRequest(audio_content=content)
-                    for content in audio_generator)
+def main():
+    # script_stt thread calling
+    language_code = 'ko-KR'  # a BCP-47 language tag    
+    stt_thread = threading.Thread(daemon=True, name="stt_thread", target=script_stt, args=(language_code,))
+    stt_thread.start()
 
-        responses = client.streaming_recognize(streaming_config, requests)
+    stream.run()
 
-        # Now, put the transcription responses to use.
-        stt_module.listen_print_loop(responses)
+    while(1):
+        time.sleep(10)
 
 
 if __name__ == '__main__':
