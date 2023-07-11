@@ -1,11 +1,13 @@
+# python -m spacy download en
 import spacy
 
 # Load the spaCy English language model
 nlp = spacy.load('en_core_web_sm')
 
 # Define a list of positive and negative relationship keywords
-positive_keywords = ['friend', 'buddy', 'pal', 'mate']
+positive_keywords = ['friends', 'buddy', 'pal', 'mate']
 negative_keywords = ['enemy', 'rival', 'foe']
+
 
 # Function to analyze conversations and infer social relationships
 def analyze_conversations(conversations):

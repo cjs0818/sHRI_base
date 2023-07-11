@@ -21,10 +21,22 @@ def classify_relationship(conversations):
 
     predicted_labels = torch.argmax(logits, dim=1)
     labels = ['junior', 'senior']
+ 
     #predicted_relationship = labels[predicted_labels.item()]
-    #return predicted_relationship
-    predicted_labels
-    return labels[1]
+    idx = predicted_labels.tolist()
+    print(f"idx: {idx}")
+    predicted_relationship = list()
+    for i in idx:
+        predicted_relationship.append(labels[i])
+
+    print(f"inputs: {inputs}")
+    print(f"outputs: {outputs}")
+    print(f"outputs.logits: {outputs.logits}")
+    print(f"predicted_labels: {predicted_labels}")
+    print(f"predicted_labels.tolist(): {predicted_labels.tolist()}")
+
+    return predicted_relationship
+    #return labels[1]
 
 # Example conversations
 conversations = "Hey, can you show me how to do this? I'm new here.", "Sure, I'd be happy to help. I've been working on this project for a year."
