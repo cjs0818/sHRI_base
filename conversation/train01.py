@@ -22,8 +22,14 @@ class MyDataset(Dataset):
             max_length=128,
             return_tensors='pt'
         )
+
+
         input_ids = encoded_input['input_ids'].squeeze()
         attention_mask = encoded_input['attention_mask'].squeeze()
+
+        print(f"self.labels: {self.labels}")
+        print(f"self.labels[idx]: {self.labels[idx]}")
+
         label = torch.tensor(self.labels[idx])
 
         return {
@@ -33,8 +39,9 @@ class MyDataset(Dataset):
         }
 
 # Prepare your dataset
-conversations = [...]  # List of conversations
-labels = [...]  # List of labels (e.g., 0 for "junior", 1 for "senior")
+conversations = ["Hey, can you show me how to do this? I'm new here.", "Sure, I'd be happy to help. I've been working on this project for a year."
+]  # List of conversations
+labels = ["junior", "senior"]  # List of labels (e.g., 0 for "junior", 1 for "senior")
 
 # Split dataset into training and validation sets
 train_conversations, val_conversations, train_labels, val_labels = train_test_split(
@@ -49,6 +56,12 @@ model = BertForSequenceClassification.from_pretrained(model_name, num_labels=2)
 # Set device to GPU if available, otherwise use CPU
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = model.to(device)
+
+print(f"train_conversations: {train_conversations}")
+print(f"train_labels: {train_labels}")
+
+print(f"val_conversations: {val_conversations}")
+print(f"val_labels: {val_labels}")
 
 # Create data loaders for training and validation sets
 train_dataset = MyDataset(train_conversations, train_labels, tokenizer)

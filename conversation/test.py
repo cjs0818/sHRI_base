@@ -1,4 +1,4 @@
-# python -m spacy download en
+# You should first execute "python -m spacy download en"
 import spacy
 
 # Load the spaCy English language model
