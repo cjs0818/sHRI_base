@@ -1,4 +1,5 @@
 # test01
+# You need to "git clone git clone https://github.com/e9t/nsmc.git"
 import numpy as np
 import pandas as pd
 import torch
@@ -6,7 +7,6 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from transformers import BertTokenizer, BertForSequenceClassification
 
-from torch.optim import Adam
 import torch.nn.functional as F
 
 train_df = pd.read_csv('./nsmc/ratings_train.txt', sep='\t')
@@ -31,8 +31,10 @@ class NsmcDataset(Dataset):
         label = self.df.iloc[idx, 2]
         return text, label
 
+# Create data loaders for training and validation sets
 nsmc_train_dataset = NsmcDataset(train_df)
-train_loader = DataLoader(nsmc_train_dataset, batch_size=2, shuffle=True, num_workers=2)
+batch_size = 2
+train_loader = DataLoader(nsmc_train_dataset, batch_size=batch_size, shuffle=True, num_workers=2)
 
 # Load pre-trained BERT model and tokenizer
 model_name = 'bert-base-multilingual-cased'
@@ -45,21 +47,26 @@ model = BertForSequenceClassification.from_pretrained(model_name)
 
 # Set device to GPU if available, otherwise use CPU
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = model.to(device)
+#model = model.to(device)
+model.to(device)
 
 
-optimizer = Adam(model.parameters(), lr=1e-6)
+# Define training parameters
+num_epochs = 1 #10
+learning_rate = 1e-6
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+criterion = torch.nn.CrossEntropyLoss()
 
 itr = 1
 p_itr = 500
-epochs = 1
 total_loss = 0
 total_len = 0
 total_correct = 0
 
+# Training loop
 model.train()
-for epoch in range(epochs):
-    
+for epoch in range(num_epochs):
+   
     for text, label in train_loader:
         optimizer.zero_grad()
         
@@ -74,6 +81,7 @@ for epoch in range(epochs):
         loss, logits = outputs
 
         pred = torch.argmax(F.softmax(logits), dim=1)
+        #pred = torch.argmax(outputs.logits, dim=1)
         correct = pred.eq(labels)
         total_correct += correct.sum().item()
         total_len += len(labels)
@@ -82,7 +90,7 @@ for epoch in range(epochs):
         optimizer.step()
         
         if itr % p_itr == 0:
-            print('[Epoch {}/{}] Iteration {} -> Train Loss: {:.4f}, Accuracy: {:.3f}'.format(epoch+1, epochs, itr, total_loss/p_itr, total_correct/total_len))
+            print('[Epoch {}/{}] Iteration {} -> Train Loss: {:.4f}, Accuracy: {:.3f}'.format(epoch+1, num_epochs, itr, total_loss/p_itr, total_correct/total_len))
             total_loss = 0
             total_len = 0
             total_correct = 0
