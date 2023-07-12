@@ -4,3 +4,4 @@ torch==2.0.1
 scikit-learn
 pytorch_transformers
 pandas
+datasets
