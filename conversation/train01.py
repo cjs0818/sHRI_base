@@ -82,6 +82,10 @@ for epoch in range(num_epochs):
     model.train()
 
     for batch in train_loader:
+
+        #print("batch:", batch)
+        #print("input_ids: {}\n label: {}".format(batch['input_ids'], batch['labels']))
+    
         input_ids = batch['input_ids'].to(device)
         attention_mask = batch['attention_mask'].to(device)
         labels = batch['labels'].to(device)

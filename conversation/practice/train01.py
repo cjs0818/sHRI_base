@@ -59,7 +59,9 @@ class MyDataset(Dataset):
 conversations = train_df['document']
 labels = train_df['label']
 #print(conversations)
-
+print("id: ", train_df['id'].head(2))
+print("document: ", train_df['document'].head(2))
+print("label: ", train_df['label'].head(2))
 
 # Split dataset into training and validation sets
 train_conversations, val_conversations, train_labels, val_labels = train_test_split(
@@ -80,6 +82,9 @@ print(f"train_labels: {train_labels}")
 
 print(f"val_conversations: {val_conversations}")
 print(f"val_labels: {val_labels}")
+
+print("train_conversations[0]: ", train_conversations[0])
+
 
 # Create data loaders for training and validation sets
 train_dataset = MyDataset(train_conversations, train_labels, tokenizer)
@@ -107,7 +112,13 @@ for epoch in range(num_epochs):
     print(f"train_loader: {train_loader}")
 
     for batch in train_loader:
-        print(f"batch: {batch['input_ids']}")
+        #print(f"batch: {batch['input_ids']}")
+
+        #print("batch:", batch)
+        #print("input_ids: {}\n label: {}".format(batch['input_ids'], batch['labels']))
+
+
+
         input_ids = batch['input_ids'].to(device)
         attention_mask = batch['attention_mask'].to(device)
         labels = batch['labels'].to(device)

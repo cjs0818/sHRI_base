@@ -1,5 +1,5 @@
 # test02.py
-# You need to "git clone git clone https://github.com/e9t/nsmc.git"
+# You need to "git clone https://github.com/e9t/nsmc.git"
 import numpy as np
 import pandas as pd
 import torch
