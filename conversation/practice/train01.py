@@ -3,6 +3,20 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from sklearn.model_selection import train_test_split
 
+# You need to "git clone git clone https://github.com/e9t/nsmc.git"
+import numpy as np
+import pandas as pd
+
+train_df = pd.read_csv('./nsmc/ratings_train.txt', sep='\t')
+test_df = pd.read_csv('./nsmc/ratings_test.txt', sep='\t')
+
+train_df.dropna(inplace=True)
+test_df.dropna(inplace=True)
+
+train_df = train_df.sample(frac=0.4, random_state=999)
+test_df = test_df.sample(frac=0.4, random_state=999)
+
+
 # Define your dataset class
 class MyDataset(Dataset):
     def __init__(self, conversations, labels, tokenizer):
@@ -27,8 +41,8 @@ class MyDataset(Dataset):
         input_ids = encoded_input['input_ids'].squeeze()
         attention_mask = encoded_input['attention_mask'].squeeze()
 
-        print(f"self.labels: {self.labels}")
-        print(f"self.labels[idx]: {self.labels[idx]}")
+        #print(f"self.labels: {self.labels}")
+        #print(f"self.labels[idx]: {self.labels[idx]}")
 
         label = torch.tensor(self.labels[idx])
 
@@ -39,9 +53,13 @@ class MyDataset(Dataset):
         }
 
 # Prepare your dataset
-conversations = ["Hey, can you show me how to do this? I'm new here.", "Sure, I'd be happy to help. I've been working on this project for a year."
-]  # List of conversations
-labels = [0, 1]  # List of labels (e.g., 0 for "junior", 1 for "senior")
+#conversations = ["Hey, can you show me how to do this? I'm new here.", "Sure, I'd be happy to help. I've been working on this project for a year."] 
+#labels = [0, 1]  # List of labels (e.g., 0 for "junior", 1 for "senior")
+
+conversations = train_df['document']
+labels = train_df['label']
+#print(conversations)
+
 
 # Split dataset into training and validation sets
 train_conversations, val_conversations, train_labels, val_labels = train_test_split(
@@ -67,6 +85,10 @@ print(f"val_labels: {val_labels}")
 train_dataset = MyDataset(train_conversations, train_labels, tokenizer)
 val_dataset = MyDataset(val_conversations, val_labels, tokenizer)
 
+#print(f"train_dataset.conversations: {train_dataset.conversations}")
+#print(f"train_dataset.labels: {train_dataset.labels}")
+#print(train_dataset[0]['input_ids'])
+
 batch_size = 16
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=batch_size)
@@ -77,11 +99,15 @@ learning_rate = 2e-5
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 criterion = torch.nn.CrossEntropyLoss()
 
+
 # Training loop
 for epoch in range(num_epochs):
     model.train()
 
+    print(f"train_loader: {train_loader}")
+
     for batch in train_loader:
+        print(f"batch: {batch['input_ids']}")
         input_ids = batch['input_ids'].to(device)
         attention_mask = batch['attention_mask'].to(device)
         labels = batch['labels'].to(device)
