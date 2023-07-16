@@ -10,11 +10,29 @@ import pandas as pd
 train_df = pd.read_csv('./nsmc/ratings_train.txt', sep='\t')
 test_df = pd.read_csv('./nsmc/ratings_test.txt', sep='\t')
 
+#train_df.drop(['id'], axis=1, inplace=True, index=False)
+
 train_df.dropna(inplace=True)
 test_df.dropna(inplace=True)
 
 train_df = train_df.sample(frac=0.4, random_state=999)
 test_df = test_df.sample(frac=0.4, random_state=999)
+
+
+conversations = list()
+labels = list()
+
+for idx in train_df.index:
+    conversations.append(train_df['document'][idx])
+    labels.append(train_df['label'][idx])
+
+train_df = {
+    "document": conversations,
+    "label": labels
+}
+
+#print("train_df['document']: ", train_df['document'])
+
 
 
 # Define your dataset class
@@ -58,10 +76,8 @@ class MyDataset(Dataset):
 
 conversations = train_df['document']
 labels = train_df['label']
-#print(conversations)
-print("id: ", train_df['id'].head(2))
-print("document: ", train_df['document'].head(2))
-print("label: ", train_df['label'].head(2))
+
+
 
 # Split dataset into training and validation sets
 train_conversations, val_conversations, train_labels, val_labels = train_test_split(
@@ -82,8 +98,6 @@ print(f"train_labels: {train_labels}")
 
 print(f"val_conversations: {val_conversations}")
 print(f"val_labels: {val_labels}")
-
-print("train_conversations[0]: ", train_conversations[0])
 
 
 # Create data loaders for training and validation sets
@@ -108,8 +122,6 @@ criterion = torch.nn.CrossEntropyLoss()
 # Training loop
 for epoch in range(num_epochs):
     model.train()
-
-    print(f"train_loader: {train_loader}")
 
     for batch in train_loader:
         #print(f"batch: {batch['input_ids']}")
