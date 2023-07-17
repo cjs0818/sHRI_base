@@ -15,8 +15,11 @@ test_df = pd.read_csv('./nsmc/ratings_test.txt', sep='\t')
 train_df.dropna(inplace=True)
 test_df.dropna(inplace=True)
 
-train_df = train_df.sample(frac=0.4, random_state=999)
-test_df = test_df.sample(frac=0.4, random_state=999)
+#train_df = train_df.sample(frac=0.4, random_state=999)
+#test_df = test_df.sample(frac=0.4, random_state=999)
+train_df = train_df.sample(frac=0.1, random_state=999)
+test_df = test_df.sample(frac=0.1, random_state=999)
+
 
 
 conversations = list()
@@ -30,9 +33,16 @@ train_df = {
     "document": conversations,
     "label": labels
 }
-
 #print("train_df['document']: ", train_df['document'])
 
+
+#-------------------------------------------------------
+# Prepare your dataset
+#conversations = ["Hey, can you show me how to do this? I'm new here.", "Sure, I'd be happy to help. I've been working on this project for a year."] 
+#labels = [0, 1]  # List of labels (e.g., 0 for "junior", 1 for "senior")
+conversations = train_df['document']
+labels = train_df['label']
+#-------------------------------------------------------
 
 
 # Define your dataset class
@@ -70,13 +80,6 @@ class MyDataset(Dataset):
             'labels': label
         }
 
-# Prepare your dataset
-#conversations = ["Hey, can you show me how to do this? I'm new here.", "Sure, I'd be happy to help. I've been working on this project for a year."] 
-#labels = [0, 1]  # List of labels (e.g., 0 for "junior", 1 for "senior")
-
-conversations = train_df['document']
-labels = train_df['label']
-
 
 
 # Split dataset into training and validation sets
@@ -85,7 +88,8 @@ train_conversations, val_conversations, train_labels, val_labels = train_test_sp
 )
 
 # Load pre-trained BERT model and tokenizer
-model_name = 'bert-base-uncased'
+#model_name = 'bert-base-uncased'
+model_name = 'beomi/kcbert-base'    # Korean BERT model
 tokenizer = BertTokenizer.from_pretrained(model_name)
 model = BertForSequenceClassification.from_pretrained(model_name, num_labels=2)
 
@@ -114,7 +118,7 @@ val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
 # Define training parameters
 num_epochs = 10
-learning_rate = 2e-5
+learning_rate = 2e-6
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 criterion = torch.nn.CrossEntropyLoss()
 
@@ -128,7 +132,6 @@ for epoch in range(num_epochs):
 
         #print("batch:", batch)
         #print("input_ids: {}\n label: {}".format(batch['input_ids'], batch['labels']))
-
 
 
         input_ids = batch['input_ids'].to(device)
