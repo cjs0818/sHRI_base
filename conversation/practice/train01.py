@@ -3,12 +3,12 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from sklearn.model_selection import train_test_split
 
-# You need to "git clone git clone https://github.com/e9t/nsmc.git"
+# You need to "git clone https://github.com/e9t/nsmc.git"
 import numpy as np
 import pandas as pd
 
-train_df = pd.read_csv('./nsmc/ratings_train.txt', sep='\t')
-test_df = pd.read_csv('./nsmc/ratings_test.txt', sep='\t')
+train_df = pd.read_csv('~/work/sHRI_base/conversation/practice/nsmc/ratings_train.txt', sep='\t')
+test_df = pd.read_csv('~/work/sHRI_base/conversation/practice/nsmc/ratings_test.txt', sep='\t')
 
 #train_df.drop(['id'], axis=1, inplace=True, index=False)
 
@@ -17,8 +17,8 @@ test_df.dropna(inplace=True)
 
 #train_df = train_df.sample(frac=0.4, random_state=999)
 #test_df = test_df.sample(frac=0.4, random_state=999)
-train_df = train_df.sample(frac=0.1, random_state=999)
-test_df = test_df.sample(frac=0.1, random_state=999)
+train_df = train_df.sample(frac=0.2, random_state=999)
+test_df = test_df.sample(frac=0.2, random_state=999)
 
 
 
