@@ -7,9 +7,8 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import pandas as pd
 
-BASE_PATH='~/work/sHRI_base/conversation/practice/'
+BASE_PATH='/home/jschoi/work/sHRI_base/conversation/practice/'
 MODEL_PATH = BASE_PATH + 'weights/'
-
 
 
 #-------------------------------------------------------
@@ -21,34 +20,22 @@ test_df = pd.read_csv(BASE_PATH + 'nsmc/ratings_test.txt', sep='\t')
 train_df.dropna(inplace=True)
 test_df.dropna(inplace=True)
 
-#train_df = train_df.sample(frac=0.4, random_state=999)
-#test_df = test_df.sample(frac=0.4, random_state=999)
-train_df = train_df.sample(frac=0.01, random_state=999)
-test_df = test_df.sample(frac=0.01, random_state=999)
+train_df = train_df.sample(frac=0.4, random_state=999)
+test_df = test_df.sample(frac=0.4, random_state=999)
+#train_df = train_df.sample(frac=0.01, random_state=999)
+#test_df = test_df.sample(frac=0.01, random_state=999)
 #-------------------------------------------------------
 
 
-
-conversations = list()
-labels = list()
-
-for idx in train_df.index:
-    conversations.append(train_df['document'][idx])
-    labels.append(train_df['label'][idx])
-
-train_df = {
-    "document": conversations,
-    "label": labels
-}
-#print("train_df['document']: ", train_df['document'])
-
+state = 0 # 0: train, 1: test
 
 #-------------------------------------------------------
 # Prepare your dataset
 #conversations = ["Hey, can you show me how to do this? I'm new here.", "Sure, I'd be happy to help. I've been working on this project for a year."] 
 #labels = [0, 1]  # List of labels (e.g., 0 for "junior", 1 for "senior")
-conversations = train_df['document']
-labels = train_df['label']
+
+conversations = train_df['document'].values
+labels = train_df['label'].values
 #-------------------------------------------------------
 
 
@@ -153,62 +140,72 @@ class CustomModel(torch.nn.Module):
 #-------------------------------------------------------
 
 
+if state == 0:  # 0: train, 1: test
 
-# Training loop
-for epoch in range(num_epochs):
-    model.train()
+    # Training loop
+    checkpoint = 1
+    for epoch in range(num_epochs):
+        model.train()
 
-    for batch in train_loader:
-        #print(f"batch: {batch['input_ids']}")
+        for batch in train_loader:
+            #print(f"batch: {batch['input_ids']}")
 
-        #print("batch:", batch)
-        #print("input_ids: {}\n label: {}".format(batch['input_ids'], batch['labels']))
+            #print("batch:", batch)
+            #print("input_ids: {}\n label: {}".format(batch['input_ids'], batch['labels']))
 
 
-        input_ids = batch['input_ids'].to(device)
-        attention_mask = batch['attention_mask'].to(device)
-        labels = batch['labels'].to(device)
-
-        optimizer.zero_grad()
-
-        outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
-        loss = outputs.loss
-        logits = outputs.logits
-
-        loss.backward()
-        optimizer.step()
-
-    # Validation
-    model.eval()
-    val_loss = 0
-    correct = 0
-    total = 0
-
-    with torch.no_grad():
-        for batch in val_loader:
             input_ids = batch['input_ids'].to(device)
             attention_mask = batch['attention_mask'].to(device)
             labels = batch['labels'].to(device)
 
+            optimizer.zero_grad()
+
             outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
-            val_loss += outputs.loss.item()
+            loss = outputs.loss
+            logits = outputs.logits
 
-            _, predicted = torch.max(outputs.logits, dim=1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+            loss.backward()
+            optimizer.step()
 
-    # Print validation metrics
-    val_loss /= len(val_loader)
-    accuracy = correct / total
-    print(f"Epoch {epoch+1}/{num_epochs}: Val Loss: {val_loss:.4f}, Accuracy: {accuracy:.4f}")
+        # Validation
+        model.eval()
+        val_loss = 0
+        correct = 0
+        total = 0
 
+        with torch.no_grad():
+            for batch in val_loader:
+                input_ids = batch['input_ids'].to(device)
+                attention_mask = batch['attention_mask'].to(device)
+                labels = batch['labels'].to(device)
 
-#-------------------------------------------------------
-# Save model
-#torch.save(model, MODEL_PATH + 'model.pt')
-#torch.save(model.state_dict(), MODEL_PATH+'model_state_dict.pt')
-#torch.save({
-#    'model': model.state_dict(),
-#    'optimizer': optimizer.state_dict()
-#}, MODEL_PATH + 'all.tar')
-#-------------------------------------------------------
+                outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+                val_loss += outputs.loss.item()
+
+                _, predicted = torch.max(outputs.logits, dim=1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+
+        # Print validation metrics
+        val_loss /= len(val_loader)
+        accuracy = correct / total
+        print(f"Epoch {epoch+1}/{num_epochs}: Val Loss: {val_loss:.4f}, Accuracy: {accuracy:.4f}")
+
+        if (epoch + 1) % 2 == 0: # at every second epoch
+            #-------------------------------------------------------
+            # Save model
+            #torch.save(model, MODEL_PATH + 'model.pt')
+            #torch.save(model.state_dict(), MODEL_PATH + 'model_state_dict.pt')
+            torch.save({
+                "model": "CustomModel",
+                "epoch": epoch,
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "loss": loss,
+                "description": f"CustomModel checkpoint-{checkpoint}"
+            }, MODEL_PATH + f"checkpoint-{checkpoint}.pt")
+            #-------------------------------------------------------
+            checkpoint += 1
+
+elif state == 1:
+    print(state)
