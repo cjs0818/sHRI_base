@@ -20,10 +20,10 @@ test_df = pd.read_csv(BASE_PATH + 'nsmc/ratings_test.txt', sep='\t')
 train_df.dropna(inplace=True)
 test_df.dropna(inplace=True)
 
-train_df = train_df.sample(frac=0.4, random_state=999)
-test_df = test_df.sample(frac=0.01, random_state=999)
-#train_df = train_df.sample(frac=0.01, random_state=999)
+#train_df = train_df.sample(frac=0.4, random_state=999)
 #test_df = test_df.sample(frac=0.01, random_state=999)
+train_df = train_df.sample(frac=0.04, random_state=999)
+test_df = test_df.sample(frac=0.01, random_state=999)
 #-------------------------------------------------------
 
 
@@ -126,9 +126,9 @@ optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 criterion = torch.nn.CrossEntropyLoss()
 
 
-#state = 0 # 0: train, 1: test, 2: load & train
+state = 0 # 0: train, 1: test, 2: load & train
 #state = 2 # 0: train, 1: test, 2: load & train
-state = 1 # 0: train, 1: test, 2: load & train
+#state = 1 # 0: train, 1: test, 2: load & train
 
 
 #-------------------------------------------------------
@@ -276,6 +276,7 @@ elif state == 0:  # 0: train
                 _, predicted = torch.max(outputs.logits, dim=1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
+                print(f"correct: {correct}, labels: {labels}, predicted: {predicted}")
 
         # Print validation metrics
         val_loss /= len(val_loader)

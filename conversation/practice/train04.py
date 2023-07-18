@@ -55,7 +55,7 @@ test_df = pd.read_csv(CSV_file, sep=',')
 train_df.dropna(inplace=True)
 test_df.dropna(inplace=True)
 
-train_df = train_df.sample(frac=0.4, random_state=999)
+train_df = train_df.sample(frac=0.8, random_state=999)
 test_df = test_df.sample(frac=0.1, random_state=999)
 
 conversations = train_df['Script'].values
@@ -139,14 +139,14 @@ test_dataset = MyDataset(test_conversations, test_labels, tokenizer)
 #print(f"train_dataset.labels: {train_dataset.labels}")
 #print(train_dataset[0]['input_ids'])
 
-batch_size = 16
+batch_size = 8
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=batch_size)
 test_loader = DataLoader(test_dataset, batch_size=batch_size)
 
 # Define training parameters
-num_epochs = 10
-learning_rate = 2e-6
+num_epochs = 25
+learning_rate = 5e-6
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 criterion = torch.nn.CrossEntropyLoss()
 
@@ -166,7 +166,7 @@ class CustomModel(torch.nn.Module):
         x = self.layer(x)
         return x
 
-if state == 1 | state == 2:  # "1: test" or "2: load & train"
+if state == 1 or state == 2:  # "1: test" or "2: load & train"
     #model = CustomModel().to(device)
 
     #torch.load(MODEL_PATH + 'model.pt', map_location=device)
@@ -308,7 +308,7 @@ elif state == 0:  # 0: train
         accuracy = correct / total
         print(f"Epoch {epoch+1}/{num_epochs}: Val Loss: {val_loss:.4f}, Accuracy: {accuracy:.4f}")
 
-        if (epoch + 1) % 2 == 0: # at every second epoch
+        if (epoch + 1) % 5 == 0: # at every second epoch
             #-------------------------------------------------------
             # Save model
             #torch.save(model, MODEL_PATH + 'model.pt')
