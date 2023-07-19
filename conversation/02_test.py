@@ -56,7 +56,7 @@ train_df.dropna(inplace=True)
 test_df.dropna(inplace=True)
 
 train_df = train_df.sample(frac=0.8, random_state=999)
-test_df = test_df.sample(frac=0.1, random_state=999)
+test_df = test_df.sample(frac=0.2, random_state=999)
 
 conversations = train_df['Script'].values
 labels = train_df['Label_(0:junior,1:senior,2:none)'].values
@@ -151,9 +151,9 @@ optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 criterion = torch.nn.CrossEntropyLoss()
 
 
-state = 0 # 0: train, 1: test, 2: load & train
+#state = 0 # 0: train, 1: test, 2: load & train
 #state = 2 # 0: train, 1: test, 2: load & train
-#state = 1 # 0: train, 1: test, 2: load & train
+state = 1 # 0: train, 1: test, 2: load & train
 
 
 #-------------------------------------------------------
@@ -171,7 +171,7 @@ if state == 1 or state == 2:  # "1: test" or "2: load & train"
 
     #torch.load(MODEL_PATH + 'model.pt', map_location=device)
 
-    load_checkpoint = 5
+    load_checkpoint = 1
     checkpoint = torch.load(MODEL_PATH + f"checkpoint-{load_checkpoint}.pt")
     model.load_state_dict(checkpoint["model_state_dict"])
     optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
@@ -254,6 +254,20 @@ if state == 2: # "2: load & train"
             }, MODEL_PATH + f"checkpoint-{checkpoint}.pt")
             #-------------------------------------------------------
             checkpoint += 1
+    #-------------------------------------------------------
+    # Save model
+    #torch.save(model, MODEL_PATH + 'model.pt')
+    #torch.save(model.state_dict(), MODEL_PATH + 'model_state_dict.pt')
+    checkpoint -= 1
+    torch.save({
+        "model": "CustomModel",
+        "epoch": epoch,
+        "model_state_dict": model.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(),
+        "loss": loss,
+        "description": f"CustomModel checkpoint-{checkpoint}"
+    }, MODEL_PATH + f"model.pt")
+    #-------------------------------------------------------
 #-------------------------------------------------------
 
 elif state == 0:  # 0: train
@@ -349,11 +363,12 @@ elif state == 1:  # 1: test
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
 
-            #print(f"predicted: {predicted}")
-            for id in range(min(batch_size, len(test_loader))):
-                print(f"len of train_loader: {len(train_loader)}, len of test_loader: {len(test_loader)}")
-                print(f"len of batch: {len(batch)}, shape of predicted: {predicted.shape}")
-                print(f"batch['labels']: {batch['labels']}")
+            print(f"batch['labels']: {batch['labels']}")
+            print(f"predicted:       {predicted}")
+            for id in range(len(batch['labels'])):
+                #print(f"len of train_loader: {len(train_loader)}, len of test_loader: {len(test_loader)}")
+                #print(f"len of batch: {len(batch)}, shape of predicted: {predicted.shape}")
+                print(f"batch['labels'][{id}]: {batch['labels'][id]}")
                 print(f"predicted: {predicted[id]}")
                 #print(f"sentence: {batch['input_ids'][id]} \n")
                 print(f"sentence: {tokenizer.decode(batch['input_ids'][id])}\n")

@@ -254,6 +254,20 @@ if state == 2: # "2: load & train"
             }, MODEL_PATH + f"checkpoint-{checkpoint}.pt")
             #-------------------------------------------------------
             checkpoint += 1
+    #-------------------------------------------------------
+    # Save model
+    #torch.save(model, MODEL_PATH + 'model.pt')
+    #torch.save(model.state_dict(), MODEL_PATH + 'model_state_dict.pt')
+    checkpoint -= 1
+    torch.save({
+        "model": "CustomModel",
+        "epoch": epoch,
+        "model_state_dict": model.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(),
+        "loss": loss,
+        "description": f"CustomModel checkpoint-{checkpoint}"
+    }, MODEL_PATH + f"model.pt")
+    #-------------------------------------------------------
 #-------------------------------------------------------
 
 elif state == 0:  # 0: train
