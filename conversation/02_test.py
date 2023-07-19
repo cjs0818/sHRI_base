@@ -171,8 +171,13 @@ if state == 1 or state == 2:  # "1: test" or "2: load & train"
 
     #torch.load(MODEL_PATH + 'model.pt', map_location=device)
 
-    load_checkpoint = 1
-    checkpoint = torch.load(MODEL_PATH + f"checkpoint-{load_checkpoint}.pt")
+    #load_checkpoint = 1
+    #checkpoint = torch.load(MODEL_PATH + f"checkpoint-{load_checkpoint}.pt")
+
+    checkpoint = torch.load(MODEL_PATH + "model.pt")
+    load_checkpoint = checkpoint['checkpoint']
+
+
     model.load_state_dict(checkpoint["model_state_dict"])
     optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
     checkpoint_epoch = checkpoint["epoch"]
@@ -339,7 +344,6 @@ elif state == 0:  # 0: train
             checkpoint += 1
 
 elif state == 1:  # 1: test
-    print(state)
 
     #val_conversation, val_labels
 
@@ -351,6 +355,7 @@ elif state == 1:  # 1: test
 
 
     with torch.no_grad():
+        it = 0
         for batch in test_loader:
             input_ids = batch['input_ids'].to(device)
             attention_mask = batch['attention_mask'].to(device)
@@ -365,7 +370,9 @@ elif state == 1:  # 1: test
 
             print(f"batch['labels']: {batch['labels']}")
             print(f"predicted:       {predicted}")
+            it += 1
             for id in range(len(batch['labels'])):
+                print(f"it / len(test_loader): {it} / {len(test_loader)}")
                 #print(f"len of train_loader: {len(train_loader)}, len of test_loader: {len(test_loader)}")
                 #print(f"len of batch: {len(batch)}, shape of predicted: {predicted.shape}")
                 print(f"batch['labels'][{id}]: {batch['labels'][id]}")

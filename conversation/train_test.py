@@ -363,11 +363,12 @@ elif state == 1:  # 1: test
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
 
-            #print(f"predicted: {predicted}")
-            for id in range(min(batch_size, len(test_loader))):
-                print(f"len of train_loader: {len(train_loader)}, len of test_loader: {len(test_loader)}")
-                print(f"len of batch: {len(batch)}, shape of predicted: {predicted.shape}")
-                print(f"batch['labels']: {batch['labels']}")
+            print(f"batch['labels']: {batch['labels']}")
+            print(f"predicted:       {predicted}")
+            for id in range(len(batch['labels'])):
+                #print(f"len of train_loader: {len(train_loader)}, len of test_loader: {len(test_loader)}")
+                #print(f"len of batch: {len(batch)}, shape of predicted: {predicted.shape}")
+                print(f"batch['labels'][{id}]: {batch['labels'][id]}")
                 print(f"predicted: {predicted[id]}")
                 #print(f"sentence: {batch['input_ids'][id]} \n")
                 print(f"sentence: {tokenizer.decode(batch['input_ids'][id])}\n")
