@@ -1,4 +1,10 @@
 Index,Start time in milliseconds,End time in milliseconds,Script,"Label_(0:junior,1:senior,2:none)"
+1,1,1,엄마,0
+2,1,1,어머니,0
+3,1,1,아빠,0
+4,1,1,아버지,0
+5,1,1,형,0
+6,1,1,누나,0
 1,870,1750,선생님,0
 2,1760,4650,왜 불러,1
 3,4670,12220,이것 좀 보세요,0

@@ -65,6 +65,34 @@ test_conversations = test_df['Script'].values
 test_labels = test_df['Label_(0:junior,1:senior,2:none)'].values
 #-------------------------------------------------------
 
+test_conversations = [
+    "형님",
+    "어, 왔어? 안녕",
+    "박사님",
+    "그래. 무슨일이지?",
+    "식사하셨나요?",
+    "아님, 음료수라도 하실까요?",
+    "아버지",
+    "아빠",
+    "어머니",
+    "엄마",
+    "형",
+    "누나"
+]
+test_labels = [
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+]
 
 # Define your dataset class
 class MyDataset(Dataset):
