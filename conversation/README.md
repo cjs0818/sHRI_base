@@ -1,7 +1,6 @@
-# conversation
-conversation Module
+# conversation (Conversation Module)
 
-It performs a binary classification between "junior (0)" and "senior (1)" using K-BERT transformers given dataset of "conversation" and "labels".
+It performs a binary classification between "junior (0)" and "senior (1)" using Korean BERT model given a dataset of "conversation" and "labels".
 
 This source code have been implimented based on Ubuntu 22.04 (64bit)
 
@@ -12,7 +11,7 @@ Python: 3.9
 ```
 
 ## How to prepare
-Create Virtual Environment.
+### Create Virtual Environment.
 ```
 conda create -n conversation python=3.9
 conda activate conversation
@@ -23,21 +22,45 @@ conda activate conversation
 pip install -r requirements.txt
 ```
 
+### Dataset
+Dataset is required to have at least two lists - "conversations" and "labels". For instance,
+```
+conversations = [
+    "형님",
+    "어, 왔어? 안녕",
+    "박사님",
+    "그래. 무슨일이지?",
+    "식사하셨나요?",
+    "아님, 음료수라도 하실까요?" 
+]
+labels = [
+    0,
+    1,
+    0,
+    1,
+    0,
+    0
+]
+```
+
+To get a large data for a training, youtube data can be used.
+1. download a caption file (.sri) of youtube contents (UniConverter program has been used.)
+2. Convert .sri to .csv by help of http://convert.4get.kr/ko/convert/csv) 
+3. Modify head descriptions as "conversations" and "labels"
+4. Create ./practice folder and prepare a dataset file "cjs.csv" from the above "3". The dataset must include two contents: "conversations" and "labels".
 
 ## How to run
-
-### Dataset
-Create ./practice folder and prepare a dataset file "cjs.csv".
-The dataset must include two contents: "conversations" and "labels".
 
 ### Train
 To train the dataset of "conversations" and "labels", do as follows:
 ```
 python 01_train.py
 ```
+The trained models will be saved as "checkpoint-x.pt" (where x means the number of checkpoint) in ./practice/weights foloder.
 
 ### Test
-To test a classification given conversation, do as follows:
+To test a classification given conversation, prepare "model.pt" in ./practice/weights folder. (you can copy some checkpoint-x.pt to model.pt)
+And type
 ```
 python 02_test.py
 ```
