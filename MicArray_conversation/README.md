@@ -68,6 +68,22 @@ cd respeaker_python_library # git clone https://github.com/respeaker/respeaker_p
 cd examples
 ```
 
+### [Option] ODAS
+Refer to https://github.com/respeaker/usb_4_mic_array
+Refer to https://respeaker.io/4_mic_array 
+
+ODAS (https://github.com/introlab/odas) is a very cool project to perform sound source localization, tracking, separation and post-filtering.
+
+Get ODAS and build it
+```
+sudo apt install libfftw3-dev libconfig-dev libasound2-dev
+git clone https://github.com/introlab/odas.git
+
+```
+
+### Audacity
+Download Audacity program from https://www.audacityteam.org
+
 ## How to run
 
 ### Connect the ReSpeaker USB 4 Mic Array to the NUC PC using a USB cable.

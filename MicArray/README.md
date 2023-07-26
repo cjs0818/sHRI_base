@@ -27,7 +27,7 @@ The Microphone Array supports USB DFU. We have [a python script - dfu.py](https:
 
 ```
 pip install pyusb
-python dfu.py --download 6_channels_firmware.bin        # with sudo if usb permission error
+python3 dfu.py --download 6_channels_firmware.bin        # with sudo if usb permission error
 ```
 
 | firmware | channels | note |
