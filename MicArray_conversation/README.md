@@ -55,6 +55,16 @@ pip install -r requirements.txt
 sudo pip3 install pyusb
 ```
 
+### Make ReSpeaker usb device to be accessible to not only root but a regular user.
+Generate a rule to get the accessibility of ReSpeaker usb device
+```
+sudo vi /etc/udev/rules.d/ReSpeaker_usb_4_mic_array.rules
+```
+Type like
+```
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="2886", ATTRS{idProduct}=="0018", OWNER="jschoi", MODE="0666"
+```
+
 ### Install pocketsphinx-python 
 ```
 git clone --recursive https://github.com/cmusphinx/pocketsphinx-python
@@ -81,8 +91,54 @@ git clone https://github.com/introlab/odas.git
 
 ```
 
+Install ODAS Studio
+```
+git clone https://github.com/introlab/odas_web
+cd odas_web
+npm install
+```
+
+Start ODAS Studio
+```
+npm start
+```
+
+In 'ODAS Control' part (bottom-left), link 'ODAS Core' to 'odaslive' execution file and link 'ODAS Config' to 'odas.cfg' configuration file in the above 'odas' folder.
+(Notice: you need to modify ip address in 'odas.cfg' file depending on your system)
+
+Click 'Lunch ODAS' and modify 'Potential sources energy range' bar in the bottom-right as [0.15 1.0] 
+
+
 ### Audacity
 Download Audacity program from https://www.audacityteam.org
+
+
+### Google Cloud Speech-To-Text
+Create Google Cloud account and download json key file.
+Follow the blog guide as below link.
+```
+https://ehdrh789.tistory.com/29
+```
+
+Install Google Cloud SDK and requirements.
+```
+curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-402.0.0-linux-x86_64.tar.gz
+tar -xf google-cloud-cli-402.0.0-linux-x86.tar.gz
+./google-cloud-sdk/install.sh
+./google-cloud-sdk/bin/gcloud init
+
+pip install --upgrade google-cloud-storage
+pip install google-cloud-speech
+conda install -c anaconda pyaudio
+```
+
+Initialize and authorize the Google Cloud Account using json key file.
+Edit
+```
+export GOOGLE_APPLICATION_CREDENTIALS=/home/USERNAME/DOWNLOAD-FOLDER/gcloud-key-filename.json
+./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file="/home/USERNAME/DOWNLOAD-FOLDER/gcloud-key-filename.json"
+```
+
 
 ## How to run
 
