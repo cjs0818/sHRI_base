@@ -1,6 +1,7 @@
 import socket
 import json
 import threading
+import math
 
 def process_ssl_sst_result(result_str):
     # Parse the JSON data to extract relevant information
@@ -34,24 +35,32 @@ def process_ssl_sst_result(result_str):
             #    ]
             #}
 
-
+            ENERGY_TH = 0.3
             if 'E' in data[0]: # ssl
                 print("      --- ssl ---")
                 for id in range(len(data)):
                     azimuth = data[id]['x']
                     elevation = data[id]['y']
-                    print(f"       ssl: Source detected at azimuth: {azimuth}, elevation: {elevation}")                
+                    energy = data[id]['E']
+                    if energy > ENERGY_TH:
+                        print(f"       ssl: Source detected at azimuth: {azimuth}, elevation: {elevation}")                
             elif 'activity' in data[0]:    # sst
-                print("   #------ sst : start ------#")
-                for id in range(len(data)):
-                    if data[id]['activity'] > 0:
+                if data[0]['activity'] > 0:
+                    print("   #------ sst : start ------#")
+                    for id in range(len(data)):
                         print(f"   sst: {data[id]}")
-                print("   #------ sst : end ------#")
+                        data_x = data[id]['x']
+                        data_y = data[id]['y']
+                        azimuth = math.atan2(data_y, data_x) * 180 / math.pi
+                        print("     azimuth: {:.1f} degree".format(azimuth))
+                    print("   #------ sst : end ------#")
             else:
                 print("No valid data found")
 
-    except:
-        print("json load error")
+    except Exception as e:
+        temp = 1
+        #print("json load error with ")
+        #print(e)
 
 
 def launch_socket_server(ip, port):
