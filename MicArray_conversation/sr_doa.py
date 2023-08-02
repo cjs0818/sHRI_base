@@ -4,7 +4,7 @@
 
 # To run
 # 1. In one terminal, run
-#    $ python sr_doa.py
+#    $ python sr_doa.py 2>/dev/null  # Here '2>/dev/null' is used to disable ALSA warning messages
 #
 # 2. In the other terminal, move to the folder where odaslive execution exists
 #     (~/work/sHRI_base/MicArray_conversion/odas/build/bin)
@@ -163,6 +163,7 @@ if __name__ == "__main__":
 
             print("Google Cloud Speech thinks you said " + r.recognize_google_cloud(audio, language="ko-KR", credentials_json=GOOGLE_CLOUD_SPEECH_CREDENTIALS))
             #print("Speaker Direction : {}".format(Mic_tuning.direction))
+
             #print(sst_az_list)
             data = sst_az_list
             
