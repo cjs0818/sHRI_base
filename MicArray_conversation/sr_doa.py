@@ -16,6 +16,7 @@
 import socket
 import json
 import threading
+from threading import Lock
 import math
 
 
@@ -27,10 +28,16 @@ import usb.core
 import usb.util
 import time
 
+sst_az_list = []
+lock_for_sst_az_list = Lock()
+verbose = 0   # 0 to disable print in process_ssl_sst_result,   1 to enable it
 
 def process_ssl_sst_result(result_str):
     # Parse the JSON data to extract relevant information
     try:
+        global sst_az_list
+        global verbose
+
         data_stream = json.loads(result_str)
 
         if "src" in data_stream:
@@ -62,25 +69,37 @@ def process_ssl_sst_result(result_str):
 
             ENERGY_TH = 0.3
             if 'E' in data[0]: # ssl
-                print("      --- ssl ---")
+                if verbose:
+                    print("      --- ssl ---")
                 for id in range(len(data)):
                     azimuth = data[id]['x']
                     elevation = data[id]['y']
                     energy = data[id]['E']
                     if energy > ENERGY_TH:
-                        print(f"       ssl: Source detected at azimuth: {azimuth}, elevation: {elevation}")                
+                        if verbose:
+                            print(f"       ssl: Source detected at azimuth: {azimuth}, elevation: {elevation}")                
             elif 'activity' in data[0]:    # sst
                 if data[0]['activity'] > 0:
-                    print("   #------ sst : start ------#")
+                    if verbose:
+                        print("   #------ sst : start ------#")
+
+                    lock_for_sst_az_list.acquire() 
+                    sst_az_list = data
+                    lock_for_sst_az_list.release()
+
                     for id in range(len(data)):
-                        print(f"   sst: {data[id]}")
+                        if verbose:
+                            print(f"   sst: {data[id]}")
                         data_x = data[id]['x']
                         data_y = data[id]['y']
                         azimuth = math.atan2(data_y, data_x) * 180 / math.pi
-                        print("     azimuth: {:.1f} degree".format(azimuth))
-                    print("   #------ sst : end ------#")
+                        if verbose:
+                            print("     azimuth: {:.1f} degree".format(azimuth))
+                    if verbose:
+                        print("   #------ sst : end ------#")
             else:
-                print("No valid data found")
+                if verbose:
+                    print("No valid data found")
 
     except Exception as e:
         temp = 1
@@ -110,7 +129,9 @@ def launch_socket_server(ip, port):
         print("Server shutdown.")
 
 
+
 if __name__ == "__main__":
+
     # Replace "ODAS_SERVER_IP" and "ODAS_SERVER_PORT" with the desired IP and port for the server
     odas_server_ip = "192.168.1.6"
     odas_server_ssl_port = 9001
@@ -121,7 +142,6 @@ if __name__ == "__main__":
 
     server_thread_sst = threading.Thread(target=launch_socket_server, args=(odas_server_ip, odas_server_sst_port))
     server_thread_sst.start()
-
 
     dev = usb.core.find(idVendor=0x2886, idProduct=0x0018)
     #Mic_tuning = Tuning(dev)
@@ -143,6 +163,21 @@ if __name__ == "__main__":
 
             print("Google Cloud Speech thinks you said " + r.recognize_google_cloud(audio, language="ko-KR", credentials_json=GOOGLE_CLOUD_SPEECH_CREDENTIALS))
             #print("Speaker Direction : {}".format(Mic_tuning.direction))
+            #print(sst_az_list)
+            data = sst_az_list
+            
+            if len(data) > 0:
+                if 'activity' in data[0]:    # sst
+                    if data[0]['activity'] > 0:
+                        print("   ##### sst in stt #####")
+
+                        for id in range(len(data)):
+                            print(f"   sst: {data[id]}")
+                            data_x = data[id]['x']
+                            data_y = data[id]['y']
+                            azimuth = math.atan2(data_y, data_x) * 180 / math.pi
+                            print("     azimuth: {:.1f} degree".format(azimuth))
+                    
 
         except sr.UnknownValueError:
             print("Google Cloud Speech could not understand audio")
