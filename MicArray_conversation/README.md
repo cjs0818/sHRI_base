@@ -146,6 +146,22 @@ export GOOGLE_APPLICATION_CREDENTIALS=/home/USERNAME/DOWNLOAD-FOLDER/gcloud-key-
 
 ### Connect the ReSpeaker USB 4 Mic Array to the NUC PC using a USB cable.
 
+To run
+1. In one terminal, type
+    ```
+    python sr_doa.py 2>/dev/null  
+    ```
+    Here '2>/dev/null' is used to disable ALSA warning messages
+
+
+2. In the other terminal, move to the folder where odaslive execution exists
+     (~/work/sHRI_base/MicArray_conversion/odas/build/bin)
+    Then, type
+    ```
+    ./odaslive -c ~/work/sHRI_base/MicArray_conversation/odas/odas.cfg 
+    ```
+
+### For individual test of ReSpeaker USB 4 Mic Array
 run "doa.py' for Direction of Arrival.
 ```
 sudo python3 doa.py
