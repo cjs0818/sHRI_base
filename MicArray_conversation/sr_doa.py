@@ -186,6 +186,7 @@ if __name__ == "__main__":
             print("Google Cloud Speech thinks you said " + test_conversations[0])
             #print("Speaker Direction : {}".format(Mic_tuning.direction))
 
+
             classification = ml.test(test_conversations, test_labels, bOnline)
             id = 0
             if classification[id] == 1:

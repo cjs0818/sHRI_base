@@ -140,6 +140,7 @@ class MachineLearning:
                     #print(f"sentence: {batch['input_ids'][id]} \n")
                     print(f"sentence: {tokenizer.decode(batch['input_ids'][id])}\n")
         
+        
         # Print validation metrics
         test_loss /= len(test_loader)
         accuracy = correct / total
