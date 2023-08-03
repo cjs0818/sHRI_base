@@ -172,15 +172,21 @@ if __name__ == "__main__":
 
     #ml.test(test_conversations, test_labels, bOnline)
 
-
     while True:
         try:
             with sr.Microphone() as source:
+                #r.adjust_for_ambient_noise(source)
                 print("Say something!")
                 audio = r.listen(source)
 
             test_conversations = []
-            test_conversations.append(r.recognize_google_cloud(audio, language="ko-KR", credentials_json=GOOGLE_CLOUD_SPEECH_CREDENTIALS))
+
+            # Google Cloud Speech-to-Text
+            #test_conversations.append(r.recognize_google_cloud(audio, language="ko-KR", credentials_json=GOOGLE_CLOUD_SPEECH_CREDENTIALS))
+
+            # Google web speech API
+            test_conversations.append(r.recognize_google(audio, language="ko-KR"))
+
             test_labels = []
             test_labels.append(0)
             print("Google Cloud Speech thinks you said " + test_conversations[0])
