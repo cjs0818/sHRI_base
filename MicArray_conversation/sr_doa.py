@@ -146,7 +146,7 @@ if __name__ == "__main__":
     server_thread_sst = threading.Thread(target=launch_socket_server, args=(odas_server_ip, odas_server_sst_port))
     server_thread_sst.start()
 
-    dev = usb.core.find(idVendor=0x2886, idProduct=0x0018)
+    #dev = usb.core.find(idVendor=0x2886, idProduct=0x0018)
     #Mic_tuning = Tuning(dev)
     #print(Mic_tuning.direction)
 
