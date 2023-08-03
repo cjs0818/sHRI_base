@@ -49,7 +49,8 @@ class MachineLearning:
 
     def __init__(self, base_path):
         self.base_path = base_path
-
+        self.model_path = base_path + 'weights/'
+ 
         #-------------------------------------------------------
         # Load pre-trained BERT model and tokenizer
 
@@ -82,7 +83,7 @@ class MachineLearning:
         #load_checkpoint = 1
         #checkpoint = torch.load(MODEL_PATH + f"checkpoint-{load_checkpoint}.pt")
 
-        checkpoint = torch.load(MODEL_PATH + "model.pt")
+        checkpoint = torch.load(self.model_path + "model.pt")
         #load_checkpoint = checkpoint['checkpoint']
 
         self.model.load_state_dict(checkpoint["model_state_dict"])
@@ -97,6 +98,7 @@ class MachineLearning:
 
         model = self.model
         device = self.device
+        tokenizer = self.tokenizer
 
         test_dataset = MyDataset(test_conversations, test_labels, tokenizer)
         batch_size = 16
@@ -126,9 +128,8 @@ class MachineLearning:
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
 
-                print(f"batch['labels']: {batch['labels']}")
-                
-                print(f"predicted:       {predicted}")
+                #print(f"batch['labels']: {batch['labels']}")
+                #print(f"predicted:       {predicted}")
                 it += 1
                 for id in range(len(batch['labels'])):
                     print(f"it / len(test_loader): {it} / {len(test_loader)}")
@@ -146,10 +147,12 @@ class MachineLearning:
         if not online:
             print(f"Val Loss: {test_loss:.4f}, Accuracy: {accuracy:.4f}")
 
-        outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
-        test_loss += outputs.loss.item()
+        return predicted
 
-        _, predicted = torch.max(outputs.logits, dim=1)
+        #outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+        #test_loss += outputs.loss.item()
+
+        #_, predicted = torch.max(outputs.logits, dim=1)
 
 
 

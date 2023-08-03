@@ -28,6 +28,9 @@ import usb.core
 import usb.util
 import time
 
+# For text_classification
+from text_classification import MachineLearning
+
 sst_az_list = []
 lock_for_sst_az_list = Lock()
 verbose = 0   # 0 to disable print in process_ssl_sst_result,   1 to enable it
@@ -155,14 +158,43 @@ if __name__ == "__main__":
     #GOOGLE_CLOUD_SPEECH_CREDENTIALS = r"""INSERT THE CONTENTS OF THE GOOGLE CLOUD SPEECH JSON CREDENTIALS FILE HERE"""
     GOOGLE_CLOUD_SPEECH_CREDENTIALS = "/home/jschoi/work/sHRI_base/STT/cjsstt.json"
 
+
+    # text_classification
+    BASE_PATH='/home/jschoi/work/sHRI_base/conversation/'
+    ml = MachineLearning(BASE_PATH)
+
+    bOnline = True
+    #test_conversations = []
+    #test_conversations.append("그래. 무슨일이지?")
+    #test_labels = []
+    #for id in range(len(test_conversations)):
+    #    test_labels.append(0)   # forcing 0s because it's not important.
+
+    #ml.test(test_conversations, test_labels, bOnline)
+
+
     while True:
         try:
             with sr.Microphone() as source:
                 print("Say something!")
                 audio = r.listen(source)
 
-            print("Google Cloud Speech thinks you said " + r.recognize_google_cloud(audio, language="ko-KR", credentials_json=GOOGLE_CLOUD_SPEECH_CREDENTIALS))
+            test_conversations = []
+            test_conversations.append(r.recognize_google_cloud(audio, language="ko-KR", credentials_json=GOOGLE_CLOUD_SPEECH_CREDENTIALS))
+            test_labels = []
+            test_labels.append(0)
+            print("Google Cloud Speech thinks you said " + test_conversations[0])
             #print("Speaker Direction : {}".format(Mic_tuning.direction))
+
+            classification = ml.test(test_conversations, test_labels, bOnline)
+            id = 0
+            if classification[id] == 1:
+                print(f" [{classification[id] }]: SENIOR! \n")
+            elif classification[id] == 0:
+                print(f" [{classification[id]}]JUNIOR \n")
+            else:
+                print(f" [{classification[id]}]: NOT DETERMINED! \n")
+
 
             #print(sst_az_list)
             data = sst_az_list
@@ -173,11 +205,12 @@ if __name__ == "__main__":
                         print("   ##### sst in stt #####")
 
                         for id in range(len(data)):
-                            print(f"   sst: {data[id]}")
-                            data_x = data[id]['x']
-                            data_y = data[id]['y']
-                            azimuth = math.atan2(data_y, data_x) * 180 / math.pi
-                            print("     azimuth: {:.1f} degree".format(azimuth))
+                            if data[id]['activity'] > 0:
+                                print(f"   sst: {data[id]}")
+                                data_x = data[id]['x']
+                                data_y = data[id]['y']
+                                azimuth = math.atan2(data_y, data_x) * 180 / math.pi
+                                print("     azimuth: {:.1f} degree".format(azimuth))
                     
 
         except sr.UnknownValueError:
