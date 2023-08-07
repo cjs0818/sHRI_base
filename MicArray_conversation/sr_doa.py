@@ -32,6 +32,7 @@ import time
 from text_classification import MachineLearning
 
 sst_az_list = []
+sst_az_stream = []
 lock_for_sst_az_list = Lock()
 verbose = 0   # 0 to disable print in process_ssl_sst_result,   1 to enable it
 
@@ -39,6 +40,7 @@ def process_ssl_sst_result(result_str):
     # Parse the JSON data to extract relevant information
     try:
         global sst_az_list
+        global sst_az_stream
         global verbose
 
         data_stream = json.loads(result_str)
@@ -88,6 +90,7 @@ def process_ssl_sst_result(result_str):
 
                     lock_for_sst_az_list.acquire() 
                     sst_az_list = data
+                    sst_az_stream = data_stream
                     lock_for_sst_az_list.release()
 
                     for id in range(len(data)):
@@ -172,6 +175,7 @@ if __name__ == "__main__":
 
     #ml.test(test_conversations, test_labels, bOnline)
 
+    n_prevTimeStamp = 0
     while True:
         try:
             with sr.Microphone() as source:
@@ -206,7 +210,9 @@ if __name__ == "__main__":
             #print(sst_az_list)
             data = sst_az_list
             
-            if len(data) > 0:
+            if len(data) > 0 and n_prevTimeStamp != sst_az_stream['timeStamp']:
+                print(f"n_prevTimeStamp: {n_prevTimeStamp}, current timeStamp: {sst_az_stream['timeStamp']}")
+                n_prevTimeStamp = sst_az_stream['timeStamp']
                 if 'activity' in data[0]:    # sst
                     if data[0]['activity'] > 0:
                         print("   ##### sst in stt #####")
