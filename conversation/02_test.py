@@ -7,8 +7,16 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import pandas as pd
 
-BASE_PATH='/home/jschoi/work/sHRI_base/conversation/'
+import sys
+
+if sys.platform == "linux" or sys.platform == "linux2":
+    BASE_PATH = '/home/jschoi/work/sHRI_base/conversation/' # for Linux
+elif sys.platform == "darwin":
+    BASE_PATH='/Users/jschoi/work/sHRI_base/conversation/' # for macOS 
+    
 MODEL_PATH = BASE_PATH + 'weights/'
+
+
 
 
 #-------------------------------------------------------
