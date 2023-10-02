@@ -11,6 +11,10 @@ Python: 3.9
 ```
 
 ## How to prepare
+### Install conda
+    In case of macOS, install Miniconda3 as https://beelinekim.tistory.com/103 (https://github.com/jeffheaton/t81_558_deep_learning/blob/master/install/manual_setup.ipynb)
+
+
 ### Create Virtual Environment.
 ```
 conda create -n conversation python=3.9
