@@ -1,2 +1,15 @@
 pyusb==1.0.2
 click==7.0
+
+# You need to install swig as 'sudo apt install swig'
+pocketsphinx  # sudo pip install pocketsphinx
+webrtcvad
+
+# You need to install portaudio19-dev first as 'sudo apt-get install portaudio19-dev' for installing pyaudio
+pyaudio
+
+respeaker
+SpeechRecognition
+hidapi # This is optional
+
+

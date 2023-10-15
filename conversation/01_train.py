@@ -7,7 +7,12 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import pandas as pd
 
-BASE_PATH='/home/jschoi/work/sHRI_base/conversation/practice/'
+import sys
+
+if sys.platform == "linux" or sys.platform == "linux2":
+    BASE_PATH = '/home/jschoi/work/sHRI_base/conversation/' # for Linux
+elif sys.platform == "darwin":
+    BASE_PATH='/Users/jschoi/work/sHRI_base/conversation/' # for macOS 
 MODEL_PATH = BASE_PATH + 'weights/'
 
 
@@ -46,7 +51,7 @@ MODEL_PATH = BASE_PATH + 'weights/'
 # Read data from csv file
 
 #CSV_file = BASE_PATH + 'misaeng/[#미생] 1~3화 39분만에 몰아보기.csv'
-CSV_file = BASE_PATH + 'cjs.csv'
+CSV_file = BASE_PATH + 'dataset/' + 'cjs.csv'
 train_df = pd.read_csv(CSV_file, sep=',')
 test_df = pd.read_csv(CSV_file, sep=',')
 
@@ -168,7 +173,6 @@ class CustomModel(torch.nn.Module):
 
 if state == 1 or state == 2:  # "1: test" or "2: load & train"
     #model = CustomModel().to(device)
-
     #torch.load(MODEL_PATH + 'model.pt', map_location=device)
 
     load_checkpoint = 5
@@ -179,14 +183,6 @@ if state == 1 or state == 2:  # "1: test" or "2: load & train"
     checkpoint_loss = checkpoint["loss"]
     checkpoint_description = checkpoint["description"]
 
-    #model_state_dict = torch.load(MODEL_PATH + 'model_state_dict.pt', map_location=device)
-    #model_state_dict = torch.load('model_state_dict')
-    #model.load_state_dict(model_state_dict)
-
-    #checkpoint = torch.load(MODEL_PATH + 'all.tar')
-    #model.load_state_dict(checkpoint['model'])
-
-    #optimizer.load_state_dict(checkpoint['optimizer'])
 
 if state == 2: # "2: load & train"
     # Training loop
@@ -200,7 +196,6 @@ if state == 2: # "2: load & train"
 
             #print("batch:", batch)
             #print("input_ids: {}\n label: {}".format(batch['input_ids'], batch['labels']))
-
 
             input_ids = batch['input_ids'].to(device)
             attention_mask = batch['attention_mask'].to(device)
@@ -282,7 +277,6 @@ elif state == 0:  # 0: train
 
             #print("batch:", batch)
             #print("input_ids: {}\n label: {}".format(batch['input_ids'], batch['labels']))
-
 
             input_ids = batch['input_ids'].to(device)
             attention_mask = batch['attention_mask'].to(device)

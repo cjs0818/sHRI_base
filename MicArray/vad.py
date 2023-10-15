@@ -9,7 +9,7 @@ if dev:
     Mic_tuning = Tuning(dev)
     while True:
         if Mic_tuning.is_voice()==1:
-            print("The detected sound is a voice")
+            print(f"The detected sound is a voice from the degree of {Mic_tuning.direction}")
         elif Mic_tuning.is_voice()==0:
             print("Waiting for sound input")
         time.sleep(0.2)
