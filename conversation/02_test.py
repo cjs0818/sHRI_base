@@ -11,9 +11,13 @@ import sys
 
 if sys.platform == "linux" or sys.platform == "linux2":
     BASE_PATH = '/home/jschoi/work/sHRI_base/conversation/' # for Linux
+    # Set device to GPU if available, otherwise use CPU
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 elif sys.platform == "darwin":
     BASE_PATH='/Users/jschoi/work/sHRI_base/conversation/' # for macOS 
-    
+    # Set device to GPU if available, otherwise use CPU
+    device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+
 MODEL_PATH = BASE_PATH + 'weights/'
 
 
@@ -161,7 +165,7 @@ tokenizer = BertTokenizer.from_pretrained(model_name)
 model = BertForSequenceClassification.from_pretrained(model_name, num_labels=3)
 
 # Set device to GPU if available, otherwise use CPU
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = model.to(device)
 #-------------------------------------------------------
 
