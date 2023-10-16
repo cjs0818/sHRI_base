@@ -403,10 +403,10 @@ elif state == 1:  # 1: test
                 print(f"it / len(test_loader): {it} / {len(test_loader)}")
                 #print(f"len of train_loader: {len(train_loader)}, len of test_loader: {len(test_loader)}")
                 #print(f"len of batch: {len(batch)}, shape of predicted: {predicted.shape}")
+                print(f"sentence: {tokenizer.decode(batch['input_ids'][id], skip_special_tokens=True)}")
                 print(f"batch['labels'][{id}]: {batch['labels'][id]}")
-                print(f"predicted: {predicted[id]}")
+                print(f"predicted: {predicted[id]}\n")
                 #print(f"sentence: {batch['input_ids'][id]} \n")
-                print(f"sentence: {tokenizer.decode(batch['input_ids'][id])}\n")
     
     # Print validation metrics
     test_loss /= len(test_loader)
