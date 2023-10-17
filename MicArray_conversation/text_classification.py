@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import pandas as pd
 
+import sys
 
 # Define your dataset class
 class MyDataset(Dataset):
@@ -61,7 +62,13 @@ class MachineLearning:
         model = BertForSequenceClassification.from_pretrained(model_name, num_labels=3)
 
         # Set device to GPU if available, otherwise use CPU
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        if sys.platform == "linux" or sys.platform == "linux2":
+            # Set device to GPU if available, otherwise use CPU
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        elif sys.platform == "darwin":
+            # Set device to GPU if available, otherwise use CPU
+            device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
         model = model.to(device)
 
         # Define training parameters
@@ -131,15 +138,15 @@ class MachineLearning:
                 #print(f"batch['labels']: {batch['labels']}")
                 #print(f"predicted:       {predicted}")
                 it += 1
+
                 for id in range(len(batch['labels'])):
                     print(f"it / len(test_loader): {it} / {len(test_loader)}")
                     #print(f"len of train_loader: {len(train_loader)}, len of test_loader: {len(test_loader)}")
                     #print(f"len of batch: {len(batch)}, shape of predicted: {predicted.shape}")
+                    print(f"sentence: {tokenizer.decode(batch['input_ids'][id], skip_special_tokens=True)}")
                     print(f"batch['labels'][{id}]: {batch['labels'][id]}")
-                    print(f"predicted: {predicted[id]}")
-                    #print(f"sentence: {batch['input_ids'][id]} \n")
-                    print(f"sentence: {tokenizer.decode(batch['input_ids'][id])}\n")
-        
+                    print(f"predicted: {predicted[id]}\n")
+                    #print(f"sentence: {batch['input_ids'][id]} \n")        
         
         # Print validation metrics
         test_loss /= len(test_loader)
@@ -161,8 +168,17 @@ class MachineLearning:
 
 if __name__ == "__main__":
 
-    BASE_PATH='/home/jschoi/work/sHRI_base/conversation/'
+    #BASE_PATH='/home/jschoi/work/sHRI_base/conversation/'
+    #MODEL_PATH = BASE_PATH + 'weights/'
+
+
+    if sys.platform == "linux" or sys.platform == "linux2":
+        BASE_PATH = '/home/jschoi/work/sHRI_base/conversation/' # for Linux
+    elif sys.platform == "darwin":
+        BASE_PATH='/Users/jschoi/work/sHRI_base/conversation/' # for macOS 
+
     MODEL_PATH = BASE_PATH + 'weights/'
+
 
     ml = MachineLearning(BASE_PATH)
 

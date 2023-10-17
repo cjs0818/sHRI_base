@@ -44,6 +44,14 @@ conda activate MA_conv
 ```
   
 ### Install requirements.
+In OSX,
+```
+brew install portaudio flac
+
+pip install -r requirements.txt
+```
+
+Otherwise,
 ```
 sudo apt install swig
 

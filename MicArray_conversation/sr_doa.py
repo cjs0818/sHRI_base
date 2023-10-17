@@ -11,6 +11,7 @@
 #    Then, run
 #   $ ./odaslive -c ~/work/sHRI_base/MicArray_conversation/odas/odas.cfg 
 
+import sys
 
 # For ssl
 import socket
@@ -163,7 +164,11 @@ if __name__ == "__main__":
 
 
     # text_classification
-    BASE_PATH='/home/jschoi/work/sHRI_base/conversation/'
+    #BASE_PATH='/home/jschoi/work/sHRI_base/conversation/'
+    if sys.platform == "linux" or sys.platform == "linux2":
+        BASE_PATH = '/home/jschoi/work/sHRI_base/conversation/' # for Linux
+    elif sys.platform == "darwin":
+        BASE_PATH='/Users/jschoi/work/sHRI_base/conversation/' # for macOS 
     ml = MachineLearning(BASE_PATH)
 
     bOnline = True
