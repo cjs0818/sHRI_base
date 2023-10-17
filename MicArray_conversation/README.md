@@ -32,6 +32,17 @@ pip install pyusb
 python dfu.py --download 6_channels_firmware.bin        # with sudo if usb permission error
 ```
 
+In OSX,
+```
+brew install libusb 
+brew install cmake fftw
+```
+
+And export DYLD_LIBRARY_PATH as followos,
+```
+export DYLD_LIBRARY_PATH="/opt/homebrew/lib:$DYLD_LIBRARY_PATH"
+```
+
 | firmware | channels | note |
 |---------------------------------|----------|-----------------------------------------------------------------------------------------------|
 | 1_channel_firmware.bin | 1 | processed audio for ASR |
