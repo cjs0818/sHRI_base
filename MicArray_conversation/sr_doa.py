@@ -141,7 +141,8 @@ if __name__ == "__main__":
 
     # Replace "ODAS_SERVER_IP" and "ODAS_SERVER_PORT" with the desired IP and port for the server
     #odas_server_ip = "192.168.1.6"
-    odas_server_ip = "192.168.1.21"
+    #odas_server_ip = "192.168.1.21"
+    odas_server_ip = socket.gethostbyname(socket.gethostname())
     odas_server_ssl_port = 9001
     odas_server_sst_port = 9000
 
