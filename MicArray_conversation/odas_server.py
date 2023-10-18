@@ -88,7 +88,12 @@ def launch_socket_server(ip, port):
 if __name__ == "__main__":
     # Replace "ODAS_SERVER_IP" and "ODAS_SERVER_PORT" with the desired IP and port for the server
     #odas_server_ip = "192.168.1.6"
-    odas_server_ip = socket.gethostbyname(socket.gethostname())
+    #odas_server_ip = socket.gethostbyname(socket.gethostname())
+
+    # Get ip address of host
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8",80))
+    odas_server_ip = s.getsockname()[0]
     odas_server_ssl_port = 9001
     odas_server_sst_port = 9000
 
