@@ -109,7 +109,11 @@ Get ODAS and build it
 ```
 sudo apt install libfftw3-dev libconfig-dev libasound2-dev
 git clone https://github.com/introlab/odas.git
-
+cd odas
+mkdir build
+cd build
+cmake ..
+make
 ```
 
 Install ODAS Studio
@@ -166,14 +170,14 @@ export GOOGLE_APPLICATION_CREDENTIALS=/home/USERNAME/DOWNLOAD-FOLDER/gcloud-key-
 ### Connect the ReSpeaker USB 4 Mic Array to the NUC PC using a USB cable.
 
 To run
-1. In one terminal, type
+1. [Server] In one terminal, type
     ```
     python sr_doa.py 2>/dev/null  
     ```
     Here '2>/dev/null' is used to disable ALSA warning messages
 
 
-2. In the other terminal, move to the folder where odaslive execution exists
+2. [Client] In the other terminal, move to the folder where odaslive execution exists
      (~/work/sHRI_base/MicArray_conversion/odas/build/bin)
     Then, type
     ```
