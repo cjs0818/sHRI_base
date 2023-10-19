@@ -9,6 +9,7 @@ webrtcvad
 pyaudio
 
 respeaker
+google-cloud-speech
 SpeechRecognition
 hidapi # This is optional
 

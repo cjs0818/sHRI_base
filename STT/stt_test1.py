@@ -143,7 +143,6 @@ def listen_print_loop(responses):
             sys.stdout.flush()
 
             num_chars_printed = len(transcript)
-
         else:
             print(transcript + overwrite_chars)
 
@@ -160,6 +159,7 @@ def main():
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
     language_code = 'ko-KR'  # a BCP-47 language tag
+    #os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/home/jschoi/work/sHRI_base/STT/cjsstt.json'
 
     client = speech.SpeechClient()
     config = speech.RecognitionConfig(
