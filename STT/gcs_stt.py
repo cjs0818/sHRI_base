@@ -34,6 +34,8 @@ from google.cloud import speech
 import pyaudio
 from six.moves import queue
 
+import os
+
 # Audio recording parameters
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
@@ -155,11 +157,19 @@ def listen_print_loop(responses):
             num_chars_printed = 0
 
 
+
 def main():
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
     language_code = 'ko-KR'  # a BCP-47 language tag
-    #os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/home/jschoi/work/sHRI_base/STT/cjsstt.json'
+    # You first should include this command to set GOOGLE_APPLICATION_CREDENTIALS and PYTHONPATH
+    if sys.platform == "linux" or sys.platform == "linux2":
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/home/jschoi/work/sHRI_base/STT/cjsstt.json'
+        os.environ["PYTHONPATH"] = '/home/jschoi/work/sHRI_base:$PYTHONPATH'
+    elif sys.platform == "darwin":
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/Users/jschoi/work/sHRI_base/STT/cjsstt.json'
+        os.environ["PYTHONPATH"] = '/Users/jschoi/work/sHRI_base:$PYTHONPATH'
+
 
     client = speech.SpeechClient()
     config = speech.RecognitionConfig(
@@ -179,6 +189,23 @@ def main():
 
         # Now, put the transcription responses to use.
         listen_print_loop(responses)
+
+        '''
+        for response in responses:
+            if not response.results:
+                continue
+
+            # The `results` list is consecutive. For streaming, we only care about
+            # the first result being considered, since once it's `is_final`, it
+            # moves on to considering the next utterance.
+            result = response.results[0]
+            if not result.alternatives:
+                continue
+
+            # Display the transcription of the top alternative.
+            transcript = result.alternatives[0].transcript
+            print(transcript)
+        '''
 
 
 if __name__ == '__main__':

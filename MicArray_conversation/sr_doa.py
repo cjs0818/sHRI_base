@@ -12,6 +12,7 @@
 #   $ ./odaslive -c ~/work/sHRI_base/MicArray_conversation/odas/odas.cfg 
 
 import sys
+import os
 
 # For ssl
 import socket
@@ -174,8 +175,12 @@ if __name__ == "__main__":
     #BASE_PATH='/home/jschoi/work/sHRI_base/conversation/'
     if sys.platform == "linux" or sys.platform == "linux2":
         BASE_PATH = '/home/jschoi/work/sHRI_base/conversation/' # for Linux
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/home/jschoi/work/sHRI_base/STT/cjsstt.json'
+        os.environ["PYTHONPATH"] = '/home/jschoi/work/sHRI_base:$PYTHONPATH'
     elif sys.platform == "darwin":
         BASE_PATH='/Users/jschoi/work/sHRI_base/conversation/' # for macOS 
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/Users/jschoi/work/sHRI_base/STT/cjsstt.json'
+        os.environ["PYTHONPATH"] = '/Users/jschoi/work/sHRI_base:$PYTHONPATH'
     ml = MachineLearning(BASE_PATH)
 
     bOnline = True
