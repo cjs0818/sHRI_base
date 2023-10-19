@@ -14,6 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# You cam use the following in the way of python command line
+#   >>> import STT.gcs_stt as sr
+#   >>> sr.main()
+
 """Google Cloud Speech API sample application using the streaming API.
 NOTE: This module requires the additional dependency `pyaudio`. To install
 using pip:
