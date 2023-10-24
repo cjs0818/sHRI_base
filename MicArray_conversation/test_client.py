@@ -5,7 +5,7 @@ import socket
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8",80))
 server_ip = s.getsockname()[0]
-#server_ip = '127.0.0.1'  # localhost
+server_ip = '192.168.1.10'  # localhost
 server_port = 9001
 
 print("server_ip: " + server_ip + ": ")

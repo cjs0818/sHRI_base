@@ -154,13 +154,15 @@
         obj->sserver.sin_port = htons(obj->interface->port);
         obj->sid = socket(AF_INET, SOCK_STREAM, 0);
 
-        if ( (connect(obj->sid, (struct sockaddr *) &(obj->sserver), sizeof(obj->sserver))) < 0 ) {
+        int result = connect(obj->sid, (struct sockaddr *) &(obj->sserver), sizeof(obj->sserver));
+        if (result < 0){
+            printf("result: %d\n", result);
+        }
+        //if ( (connect(obj->sid, (struct sockaddr *) &(obj->sserver), sizeof(obj->sserver))) < 0 ) {
+        //    printf("Sink pots: Cannot connect to server\n");
+        //    exit(EXIT_FAILURE);
 
-            printf("Sink pots: Cannot connect to server\n");
-            exit(EXIT_FAILURE);
-
-        }  
-
+        //}
     }
 
     void snk_pots_open_interface_terminal(snk_pots_obj * obj) {
