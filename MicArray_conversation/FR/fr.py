@@ -1,15 +1,22 @@
 import face_recognition
 import cv2
 
-# Load a sample image containing the face you want to recognize
-known_image = face_recognition.load_image_file("known_face.jpg")
+# Load known face images and their names
+#known_face_images = ["person1.jpg", "person2.jpg", "person3.jpg"]
+#known_face_names = ["Person 1", "Person 2", "Person 3"]
 
-# Encode the known face
-known_face_encoding = face_recognition.face_encodings(known_image)[0]
+known_face_images = ["known_face.jpg"]
+known_face_names = ["known_person_01"]
 
-# Create an array of known face encodings and their corresponding names
-known_face_encodings = [known_face_encoding]
-known_face_names = ["Known Person"]
+
+# Initialize lists to store known face encodings
+known_face_encodings = []
+
+# Load and encode the known faces
+for image_file in known_face_images:
+    image = face_recognition.load_image_file(image_file)
+    encoding = face_recognition.face_encodings(image)[0]
+    known_face_encodings.append(encoding)
 
 # Initialize the webcam
 video_capture = cv2.VideoCapture(0)
@@ -24,18 +31,18 @@ while True:
     # Encode the faces in the current frame
     face_encodings = face_recognition.face_encodings(frame, face_locations)
 
-    for face_encoding in face_encodings:
+    for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
         # Check if the face matches any of the known faces
         matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
 
         name = "Unknown Person"
 
-        if True in matches:
-            first_match_index = matches.index(True)
-            name = known_face_names[first_match_index]
+        for i, match in enumerate(matches):
+            if match:
+                name = known_face_names[i]
+                break
 
         # Draw a rectangle around the face and label it
-        top, right, bottom, left = face_locations[0]
         cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
         font = cv2.FONT_HERSHEY_DUPLEX
         cv2.putText(frame, name, (left + 6, bottom - 6), font, 0.5, (255, 255, 255), 1)
