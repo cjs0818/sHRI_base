@@ -25,6 +25,11 @@ import math
 # For stt
 import speech_recognition as sr
 
+import STT.gcs_stt as gcs_stt
+from google.cloud import speech
+import re
+
+
 from tuning import Tuning
 import usb.core
 import usb.util
@@ -32,6 +37,8 @@ import time
 
 # For text_classification
 from text_classification import MachineLearning
+
+global g_speech_recognized, g_speech_result
 
 sst_az_list = []
 sst_az_stream = []
@@ -137,6 +144,96 @@ def launch_socket_server(ip, port):
         print("Server shutdown.")
 
 
+def listen_print_loop(responses):
+    """Iterates through server responses and prints them.
+    The responses passed is a generator that will block until a response
+    is provided by the server.
+    Each response may contain multiple results, and each result may contain
+    multiple alternatives; for details, see https://goo.gl/tjCPAU.  Here we
+    print only the transcription for the top alternative of the top result.
+    In this case, responses are provided for interim results as well. If the
+    response is an interim one, print a line feed at the end of it, to allow
+    the next result to overwrite it, until the response is a final one. For the
+    final one, print a newline to preserve the finalized transcription.
+    """
+    global g_speech_result, g_speech_recognized
+
+    num_chars_printed = 0
+    transcript = "NULL"
+    for response in responses:
+        if not response.results:
+            continue
+
+        # The `results` list is consecutive. For streaming, we only care about
+        # the first result being considered, since once it's `is_final`, it
+        # moves on to considering the next utterance.
+        result = response.results[0]
+        if not result.alternatives:
+            continue
+
+        # Display the transcription of the top alternative.
+        transcript = result.alternatives[0].transcript
+
+        # Display interim results, but with a carriage return at the end of the
+        # line, so subsequent lines will overwrite them.
+        #
+        # If the previous result was longer than this one, we need to print
+        # some extra spaces to overwrite the previous result
+        overwrite_chars = ' ' * (num_chars_printed - len(transcript))
+
+        if not result.is_final:
+            sys.stdout.write(transcript + overwrite_chars + '\r')
+            sys.stdout.flush()
+
+            num_chars_printed = len(transcript)
+        else:
+            print(transcript + overwrite_chars)
+            g_speech_result = 1                 # global
+            g_speech_recognized = transcript    # global
+
+            # Exit recognition if any of the transcribed phrases could be
+            # one of our keywords.
+            if re.search(r'\b(exit|quit)\b', transcript, re.I):
+                print('Exiting..')
+                break
+
+            num_chars_printed = 0
+
+
+def speech_recog():
+    # See http://g.co/cloud/speech/docs/languages
+    # for a list of supported languages.
+    language_code = 'ko-KR'  # a BCP-47 language tag
+    # You first should include this command to set GOOGLE_APPLICATION_CREDENTIALS and PYTHONPATH
+    if sys.platform == "linux" or sys.platform == "linux2":
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/home/jschoi/work/sHRI_base/STT/cjsstt.json'
+        os.environ["PYTHONPATH"] = '/home/jschoi/work/sHRI_base:$PYTHONPATH'
+    elif sys.platform == "darwin":
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/Users/jschoi/work/sHRI_base/STT/cjsstt.json'
+        os.environ["PYTHONPATH"] = '/Users/jschoi/work/sHRI_base:$PYTHONPATH'
+
+
+    client = speech.SpeechClient()
+    config = speech.RecognitionConfig(
+        encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+        sample_rate_hertz=gcs_stt.RATE,
+        language_code=language_code)
+    streaming_config = speech.StreamingRecognitionConfig(
+        config=config,
+        interim_results=True)
+    
+
+    with gcs_stt.MicrophoneStream(gcs_stt.RATE, gcs_stt.CHUNK) as stream:
+        audio_generator = stream.generator()
+        requests = (speech.StreamingRecognizeRequest(audio_content=content)
+                    for content in audio_generator)
+
+        responses = client.streaming_recognize(streaming_config, requests)
+
+        # Now, put the transcription responses to use. 
+        listen_print_loop(responses)
+
+
 
 if __name__ == "__main__":
 
@@ -157,6 +254,9 @@ if __name__ == "__main__":
 
     server_thread_sst = threading.Thread(target=launch_socket_server, args=(odas_server_ip, odas_server_sst_port))
     server_thread_sst.start()
+
+    gcs_stt_thread_stt = threading.Thread(target=speech_recog)
+    gcs_stt_thread_stt.start()
 
     #dev = usb.core.find(idVendor=0x2886, idProduct=0x0018)
     #Mic_tuning = Tuning(dev)
@@ -193,8 +293,11 @@ if __name__ == "__main__":
     #ml.test(test_conversations, test_labels, bOnline)
 
     n_prevTimeStamp = 0
+    g_speech_result = 0
+    g_speech_recognized = "NULL"
     while True:
         try:
+            '''
             with sr.Microphone() as source:
                 #r.adjust_for_ambient_noise(source)
                 print("Say something!")
@@ -203,44 +306,51 @@ if __name__ == "__main__":
             test_conversations = []
 
             # Google Cloud Speech-to-Text
-            #test_conversations.append(r.recognize_google_cloud(audio, language="ko-KR", credentials_json=GOOGLE_CLOUD_SPEECH_CREDENTIALS))
+            test_conversations.append(r.recognize_google_cloud(audio, language="ko-KR", credentials_json=GOOGLE_CLOUD_SPEECH_CREDENTIALS))
 
             # Google web speech API
-            test_conversations.append(r.recognize_google(audio, language="ko-KR"))
+            #test_conversations.append(r.recognize_google(audio, language="ko-KR"))
+            '''
 
-            test_labels = []
-            test_labels.append(0)
-            print("Google Cloud Speech thinks you said " + test_conversations[0])
-            #print("Speaker Direction : {}".format(Mic_tuning.direction))
-
-
-            classification = ml.test(test_conversations, test_labels, bOnline)
-            id = 0
-            if classification[id] == 1:
-                print(f" [{classification[id] }]: SENIOR! \n")
-            elif classification[id] == 0:
-                print(f" [{classification[id]}]: JUNIOR! \n")
-            else:
-                print(f" [{classification[id]}]: NOT DETERMINED! \n")
-
-
-            #print(sst_az_list)
-            data = sst_az_list
+            if g_speech_result:
+                g_speech_result = 0
+                
+                test_conversations = []
+                test_conversations.append(g_speech_recognized)
             
-            if len(data) > 0 and n_prevTimeStamp != sst_az_stream['timeStamp']:
-                print(f"n_prevTimeStamp: {n_prevTimeStamp}, current timeStamp: {sst_az_stream['timeStamp']}")
-                n_prevTimeStamp = sst_az_stream['timeStamp']
-                if 'activity' in data[0]:    # sst
-                    if data[0]['activity'] > 0:
-                        print("   ##### sst in stt #####")
+                test_labels = []
+                test_labels.append(0)
+                print("Google Cloud Speech thinks you said " + test_conversations[0])
+                #print("Speaker Direction : {}".format(Mic_tuning.direction))
 
-                        for id in range(len(data)):
-                            if data[id]['activity'] > 0:
-                                print(f"   sst: {data[id]}")
-                                data_x = data[id]['x']
-                                data_y = data[id]['y']
-                                azimuth = math.atan2(data_y, data_x) * 180 / math.pi
-                                print("     azimuth: {:.1f} degree".format(azimuth))
+
+                classification = ml.test(test_conversations, test_labels, bOnline)
+                id = 0
+                if classification[id] == 1:
+                    print(f" [{classification[id] }]: SENIOR! \n")
+                elif classification[id] == 0:
+                    print(f" [{classification[id]}]: JUNIOR! \n")
+                else:
+                    print(f" [{classification[id]}]: NOT DETERMINED! \n")
+
+
+                #print(sst_az_list)
+                data = sst_az_list
+                
+                if len(data) > 0 and n_prevTimeStamp != sst_az_stream['timeStamp']:
+                    print(f"n_prevTimeStamp: {n_prevTimeStamp}, current timeStamp: {sst_az_stream['timeStamp']}")
+                    n_prevTimeStamp = sst_az_stream['timeStamp']
+                    if 'activity' in data[0]:    # sst
+                        if data[0]['activity'] > 0:
+                            print("   ##### sst in stt #####")
+
+                            for id in range(len(data)):
+                                if data[id]['activity'] > 0:
+                                    print(f"   sst: {data[id]}")
+                                    data_x = data[id]['x']
+                                    data_y = data[id]['y']
+                                    azimuth = math.atan2(data_y, data_x) * 180 / math.pi
+                                    print("     azimuth: {:.1f} degree".format(azimuth))
                     
 
         except sr.UnknownValueError:

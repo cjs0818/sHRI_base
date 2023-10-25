@@ -123,6 +123,7 @@ def listen_print_loop(responses):
     final one, print a newline to preserve the finalized transcription.
     """
     num_chars_printed = 0
+
     for response in responses:
         if not response.results:
             continue
