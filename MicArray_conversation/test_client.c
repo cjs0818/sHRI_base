@@ -10,7 +10,7 @@ int main() {
     //char *server_ip = "127.0.0.1";  // localhost
     //int server_port = 12345;
     char *server_ip = "192.168.1.10";  // localhost
-    int server_port = 9001;
+    int server_port = 9000;
 
     // Create a socket
     int client_socket = socket(AF_INET, SOCK_STREAM, 0);

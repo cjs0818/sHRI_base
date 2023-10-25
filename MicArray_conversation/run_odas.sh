@@ -1,1 +1,1 @@
-./odas/build/bin/odaslive -c ./odas/odas.cfg
+./odas/build/bin/odaslive -v -c ./odas/odas.cfg

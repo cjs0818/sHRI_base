@@ -154,9 +154,18 @@
         obj->sserver.sin_port = htons(obj->interface->port);
         obj->sid = socket(AF_INET, SOCK_STREAM, 0);
 
-        int result = connect(obj->sid, (struct sockaddr *) &(obj->sserver), sizeof(obj->sserver));
+        int result = 0;
+
+        //printf("\n");
+        //printf(" obj->sid: %d\n", obj->sid);
+        //printf(" obj->sserver.sin_addr.s_addr: %s, %d\n", obj->interface->ip, obj->sserver.sin_addr.s_addr);
+        //printf(" obj->sserver.sin_addr.s_port: %d, %d\n", obj->interface->port, obj->sserver.sin_port);
+        
+        result = connect(obj->sid, (struct sockaddr *) &(obj->sserver), sizeof(obj->sserver));
         if (result < 0){
             printf("result: %d\n", result);
+            printf("Sink pots: Cannot connect to server\n");
+            exit(EXIT_FAILURE);
         }
         //if ( (connect(obj->sid, (struct sockaddr *) &(obj->sserver), sizeof(obj->sserver))) < 0 ) {
         //    printf("Sink pots: Cannot connect to server\n");
