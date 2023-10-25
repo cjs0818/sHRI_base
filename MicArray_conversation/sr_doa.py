@@ -152,8 +152,8 @@ if __name__ == "__main__":
     odas_server_ssl_port = 9001
     odas_server_sst_port = 9000
 
-    server_thread_ssl = threading.Thread(target=launch_socket_server, args=(odas_server_ip, odas_server_ssl_port))
-    server_thread_ssl.start()
+    #server_thread_ssl = threading.Thread(target=launch_socket_server, args=(odas_server_ip, odas_server_ssl_port))
+    #server_thread_ssl.start()
 
     server_thread_sst = threading.Thread(target=launch_socket_server, args=(odas_server_ip, odas_server_sst_port))
     server_thread_sst.start()
