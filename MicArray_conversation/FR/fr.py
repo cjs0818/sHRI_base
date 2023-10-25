@@ -1,5 +1,6 @@
 import face_recognition
 import cv2
+import math
 
 # Load known face images and their names
 #known_face_images = ["person1.jpg", "person2.jpg", "person3.jpg"]
@@ -19,14 +20,28 @@ for image_file in known_face_images:
     known_face_encodings.append(encoding)
 
 # Initialize the webcam
-video_capture = cv2.VideoCapture(0)
+'''
+for camera_idx in range(10):
+    video_capture = cv2.VideoCapture(camera_idx)
+    if video_capture.isOpened():
+        print(f'연결된 카메라가 있음: {camera_idx}')
+        break
+'''
+#camera_idx = 0
+camera_idx = 1
+video_capture = cv2.VideoCapture(camera_idx)
+if not video_capture.isOpened():
+    print(f'연결된 카메라가 없음: {camera_idx}')
 
 while True:
     # Capture a frame from the webcam
     ret, frame = video_capture.read()
 
+
     # Find all face locations in the current frame
     face_locations = face_recognition.face_locations(frame)
+    #face_locations = face_recognition.api.batch_face_locations(frame)
+
     
     # Encode the faces in the current frame
     face_encodings = face_recognition.face_encodings(frame, face_locations)
@@ -46,6 +61,24 @@ while True:
         cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
         font = cv2.FONT_HERSHEY_DUPLEX
         cv2.putText(frame, name, (left + 6, bottom - 6), font, 0.5, (255, 255, 255), 1)
+
+
+        MAX_ANGLE = 45*math.pi/180
+        tan_MAX_ANGLE = math.tan(MAX_ANGLE)
+
+        width = video_capture.get(cv2.CAP_PROP_FRAME_WIDTH)
+        img_center_x = int((left + right)/2)
+        img_center_y = int((top + bottom)/2)
+        frame_center_x = width/2
+        ratio = frame_center_x - img_center_x
+        img_ang = math.atan(ratio/frame_center_x*tan_MAX_ANGLE)
+
+        cv2.circle(frame, (img_center_x, img_center_y), 10, (0,255,0),5) 
+
+        print(f'center: {frame_center_x}, width: {width}')
+        print(f'ratio: {ratio}')      
+        print(f'img_ang: {img_ang*180/math.pi}')
+
 
     # Display the resulting image
     cv2.imshow('Video', frame)
