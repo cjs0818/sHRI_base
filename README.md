@@ -113,7 +113,7 @@
 
 # 7. Speech to Text Module Setting
 
-[Follow the Speech to Text Module setting guide.](https://github.com/cjs0818/sHRI_base/tree/main/STT)
+[Follow the Speech to Text Module setting guide.](https://github.com/cjs0818/sHRI_base/tree/main/MicArray_conversation/STT)
 
 </br>
 
