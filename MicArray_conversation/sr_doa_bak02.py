@@ -24,15 +24,7 @@ import math
 
 # For stt
 import speech_recognition as sr
-global BASE_PATH
-if sys.platform == "linux" or sys.platform == "linux2":
-    BASE_PATH = '/home/jschoi/work/sHRI_base/conversation/' # for Linux
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/home/jschoi/work/sHRI_base/STT/cjsstt.json'
-    os.environ["PYTHONPATH"] = '/home/jschoi/work/sHRI_base:$PYTHONPATH'
-elif sys.platform == "darwin":
-    BASE_PATH='/Users/jschoi/work/sHRI_base/conversation/' # for macOS 
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/Users/jschoi/work/sHRI_base/STT/cjsstt.json'
-    os.environ["PYTHONPATH"] = '/Users/jschoi/work/sHRI_base:$PYTHONPATH'
+
 import STT.gcs_stt as gcs_stt
 from google.cloud import speech
 import re
@@ -213,6 +205,7 @@ def speech_recog():
     # for a list of supported languages.
     language_code = 'ko-KR'  # a BCP-47 language tag
 
+
     client = speech.SpeechClient()
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
@@ -255,8 +248,10 @@ if __name__ == "__main__":
     server_thread_sst = threading.Thread(target=launch_socket_server, args=(odas_server_ip, odas_server_sst_port))
     server_thread_sst.start()
 
+    '''
     gcs_stt_thread_stt = threading.Thread(target=speech_recog)
     gcs_stt_thread_stt.start()
+    '''
 
     #dev = usb.core.find(idVendor=0x2886, idProduct=0x0018)
     #Mic_tuning = Tuning(dev)
@@ -265,14 +260,14 @@ if __name__ == "__main__":
     # obtain audio from the microphone
     r = sr.Recognizer()
 
+
     # recognize speech using Google Cloud Speech
     #GOOGLE_CLOUD_SPEECH_CREDENTIALS = r"""INSERT THE CONTENTS OF THE GOOGLE CLOUD SPEECH JSON CREDENTIALS FILE HERE"""
-    #GOOGLE_CLOUD_SPEECH_CREDENTIALS = "/home/jschoi/work/sHRI_base/STT/cjsstt.json"
+    GOOGLE_CLOUD_SPEECH_CREDENTIALS = "/home/jschoi/work/sHRI_base/STT/cjsstt.json"
 
 
     # text_classification
     #BASE_PATH='/home/jschoi/work/sHRI_base/conversation/'
-    '''
     if sys.platform == "linux" or sys.platform == "linux2":
         BASE_PATH = '/home/jschoi/work/sHRI_base/conversation/' # for Linux
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/home/jschoi/work/sHRI_base/STT/cjsstt.json'
@@ -281,8 +276,8 @@ if __name__ == "__main__":
         BASE_PATH='/Users/jschoi/work/sHRI_base/conversation/' # for macOS 
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/Users/jschoi/work/sHRI_base/STT/cjsstt.json'
         os.environ["PYTHONPATH"] = '/Users/jschoi/work/sHRI_base:$PYTHONPATH'
-    '''
     ml = MachineLearning(BASE_PATH)
+
 
     bOnline = True
     #test_conversations = []
@@ -298,7 +293,6 @@ if __name__ == "__main__":
     g_speech_recognized = "NULL"
     while True:
         try:
-            '''
             with sr.Microphone() as source:
                 #r.adjust_for_ambient_noise(source)
                 print("Say something!")
@@ -311,50 +305,50 @@ if __name__ == "__main__":
 
             # Google web speech API
             #test_conversations.append(r.recognize_google(audio, language="ko-KR"))
+            
             '''
-
             if g_speech_result:
                 g_speech_result = 0
 
                 test_conversations = []
                 test_conversations.append(g_speech_recognized)
+            '''
+
+            test_labels = []
+            test_labels.append(0)
+            #print("Google Cloud Speech thinks you said " + test_conversations[0])
+            #print("Speaker Direction : {}".format(Mic_tuning.direction))
+
+
+            classification = ml.test(test_conversations, test_labels, bOnline)
+            id = 0
+            print(" #---- sc ----#")
+            if classification[id] == 1:
+                print(f"   [{classification[id] }]: SENIOR! \n")
+            elif classification[id] == 0:
+                print(f"   [{classification[id]}]: JUNIOR! \n")
+            else:
+                print(f"   [{classification[id]}]: NOT DETERMINED! \n")
+
+
+            #print(sst_az_list)
+            data = sst_az_list
             
-                test_labels = []
-                test_labels.append(0)
-                #print("Google Cloud Speech thinks you said " + test_conversations[0])
-                #print("Speaker Direction : {}".format(Mic_tuning.direction))
+            if len(data) > 0 and n_prevTimeStamp != sst_az_stream['timeStamp']:
+                print(f" n_prevTimeStamp: {n_prevTimeStamp}, current timeStamp: {sst_az_stream['timeStamp']}")
+                n_prevTimeStamp = sst_az_stream['timeStamp']
+                if 'activity' in data[0]:    # sst
+                    if data[0]['activity'] > 0:
+                        print(" #---- sst ----#")
 
+                        for id in range(len(data)):
+                            if data[id]['activity'] > 0:
+                                print(f"   sst: {data[id]}")
+                                data_x = data[id]['x']
+                                data_y = data[id]['y']
+                                azimuth = math.atan2(data_y, data_x) * 180 / math.pi
+                                print("   azimuth: {:.1f} degree".format(azimuth))
 
-                classification = ml.test(test_conversations, test_labels, bOnline)
-                id = 0
-                print(" #---- sc ----#")
-                if classification[id] == 1:
-                    print(f"   [{classification[id] }]: SENIOR! \n")
-                elif classification[id] == 0:
-                    print(f"   [{classification[id]}]: JUNIOR! \n")
-                else:
-                    print(f"   [{classification[id]}]: NOT DETERMINED! \n")
-
-
-                #print(sst_az_list)
-                data = sst_az_list
-                
-                if len(data) > 0 and n_prevTimeStamp != sst_az_stream['timeStamp']:
-                    print(f" n_prevTimeStamp: {n_prevTimeStamp}, current timeStamp: {sst_az_stream['timeStamp']}")
-                    n_prevTimeStamp = sst_az_stream['timeStamp']
-                    if 'activity' in data[0]:    # sst
-                        if data[0]['activity'] > 0:
-                            print(" #---- sst ----#")
-
-                            for id in range(len(data)):
-                                if data[id]['activity'] > 0:
-                                    print(f"   sst: {data[id]}")
-                                    data_x = data[id]['x']
-                                    data_y = data[id]['y']
-                                    azimuth = math.atan2(data_y, data_x) * 180 / math.pi
-                                    print("   azimuth: {:.1f} degree".format(azimuth))
-                print("\n")
-                print("Say something!")
                     
 
         except sr.UnknownValueError:
