@@ -25,14 +25,15 @@ import math
 # For stt
 import speech_recognition as sr
 global BASE_PATH
+
 if sys.platform == "linux" or sys.platform == "linux2":
     BASE_PATH = '/home/jschoi/work/sHRI_base/conversation/' # for Linux
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/home/jschoi/work/sHRI_base/STT/cjsstt.json'
-    os.environ["PYTHONPATH"] = '/home/jschoi/work/sHRI_base:$PYTHONPATH'
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/home/jschoi/work/sHRI_base/MicArray_conversation/STT/cjsstt.json'
+#    os.environ["PYTHONPATH"] = '/home/jschoi/work/sHRI_base:$PYTHONPATH'
 elif sys.platform == "darwin":
     BASE_PATH='/Users/jschoi/work/sHRI_base/conversation/' # for macOS 
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/Users/jschoi/work/sHRI_base/STT/cjsstt.json'
-    os.environ["PYTHONPATH"] = '/Users/jschoi/work/sHRI_base:$PYTHONPATH'
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/Users/jschoi/work/sHRI_base/MicArray_conversation/STT/cjsstt.json'
+#    os.environ["PYTHONPATH"] = '/Users/jschoi/work/sHRI_base:$PYTHONPATH'
 import STT.gcs_stt as gcs_stt
 from google.cloud import speech
 import re
@@ -272,16 +273,6 @@ if __name__ == "__main__":
 
     # text_classification
     #BASE_PATH='/home/jschoi/work/sHRI_base/conversation/'
-    '''
-    if sys.platform == "linux" or sys.platform == "linux2":
-        BASE_PATH = '/home/jschoi/work/sHRI_base/conversation/' # for Linux
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/home/jschoi/work/sHRI_base/STT/cjsstt.json'
-        os.environ["PYTHONPATH"] = '/home/jschoi/work/sHRI_base:$PYTHONPATH'
-    elif sys.platform == "darwin":
-        BASE_PATH='/Users/jschoi/work/sHRI_base/conversation/' # for macOS 
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/Users/jschoi/work/sHRI_base/STT/cjsstt.json'
-        os.environ["PYTHONPATH"] = '/Users/jschoi/work/sHRI_base:$PYTHONPATH'
-    '''
     ml = MachineLearning(BASE_PATH)
 
     bOnline = True
