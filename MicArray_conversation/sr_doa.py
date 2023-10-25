@@ -222,7 +222,7 @@ def speech_recog():
         config=config,
         interim_results=True)
     
-
+    print("Say something!")
     with gcs_stt.MicrophoneStream(gcs_stt.RATE, gcs_stt.CHUNK) as stream:
         audio_generator = stream.generator()
         requests = (speech.StreamingRecognizeRequest(audio_content=content)
@@ -314,35 +314,36 @@ if __name__ == "__main__":
 
             if g_speech_result:
                 g_speech_result = 0
-                
+
                 test_conversations = []
                 test_conversations.append(g_speech_recognized)
             
                 test_labels = []
                 test_labels.append(0)
-                print("Google Cloud Speech thinks you said " + test_conversations[0])
+                #print("Google Cloud Speech thinks you said " + test_conversations[0])
                 #print("Speaker Direction : {}".format(Mic_tuning.direction))
 
 
                 classification = ml.test(test_conversations, test_labels, bOnline)
                 id = 0
+                print(" #---- sc ----#")
                 if classification[id] == 1:
-                    print(f" [{classification[id] }]: SENIOR! \n")
+                    print(f"   [{classification[id] }]: SENIOR! \n")
                 elif classification[id] == 0:
-                    print(f" [{classification[id]}]: JUNIOR! \n")
+                    print(f"   [{classification[id]}]: JUNIOR! \n")
                 else:
-                    print(f" [{classification[id]}]: NOT DETERMINED! \n")
+                    print(f"   [{classification[id]}]: NOT DETERMINED! \n")
 
 
                 #print(sst_az_list)
                 data = sst_az_list
                 
                 if len(data) > 0 and n_prevTimeStamp != sst_az_stream['timeStamp']:
-                    print(f"n_prevTimeStamp: {n_prevTimeStamp}, current timeStamp: {sst_az_stream['timeStamp']}")
+                    print(f" n_prevTimeStamp: {n_prevTimeStamp}, current timeStamp: {sst_az_stream['timeStamp']}")
                     n_prevTimeStamp = sst_az_stream['timeStamp']
                     if 'activity' in data[0]:    # sst
                         if data[0]['activity'] > 0:
-                            print("   ##### sst in stt #####")
+                            print(" #---- sst ----#")
 
                             for id in range(len(data)):
                                 if data[id]['activity'] > 0:
@@ -350,7 +351,9 @@ if __name__ == "__main__":
                                     data_x = data[id]['x']
                                     data_y = data[id]['y']
                                     azimuth = math.atan2(data_y, data_x) * 180 / math.pi
-                                    print("     azimuth: {:.1f} degree".format(azimuth))
+                                    print("   azimuth: {:.1f} degree".format(azimuth))
+                print("\n")
+                print("Say something!")
                     
 
         except sr.UnknownValueError:
