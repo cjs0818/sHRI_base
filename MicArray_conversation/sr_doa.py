@@ -38,6 +38,12 @@ import STT.gcs_stt as gcs_stt
 from google.cloud import speech
 import re
 
+# For fd
+import FR.fd as fd
+import argparse
+import cv2
+from imutils import face_utils, video
+
 
 from tuning import Tuning
 import usb.core
@@ -235,8 +241,96 @@ def speech_recog():
         listen_print_loop(responses)
 
 
+def face_detection_realtime(detector, args):
+
+    # Feed from computer camera with threading
+    camera_idx = 0
+    #camera_idx = 1
+    cap = video.VideoStream(camera_idx).start()
+
+
+    MAX_ANGLE = 45*math.pi/180
+    tan_MAX_ANGLE = math.tan(MAX_ANGLE)
+
+    global g_fd_results
+
+    while True:
+
+        # Getting out image frame by webcam
+        img = cap.read()
+
+        # https://docs.opencv.org/trunk/d6/d0f/group__dnn.html#ga29f34df9376379a603acd8df581ac8d7
+        inputBlob = cv2.dnn.blobFromImage(cv2.resize(
+            img, (300, 300)), 1, (300, 300), (104, 177, 123))
+
+        detector.setInput(inputBlob)
+        detections = detector.forward()
+        img, total_faces, detected_l = fd.find_faces(img, detections, args)
+
+        id = 0
+        g_fd_results = []
+        for detected in detected_l:
+            (x1,x2,y1,y2) = detected['box']
+
+            #width = video_capture.get(cv2.CAP_PROP_FRAME_WIDTH)
+            (h, w) = img.shape[:2]
+            width = w
+            img_center_x = int((x1 + x2)/2)
+            img_center_y = int((y1 + y2)/2)
+            frame_center_x = width/2
+            ratio = frame_center_x - img_center_x
+            img_ang = math.atan(ratio/frame_center_x*tan_MAX_ANGLE)
+            detected['azimuth'] = img_ang
+            g_fd_results.append(detected)
+            print(f'id: {id}, img_ang: {img_ang*180/math.pi},  detected_boxs: {(x1,x2,y1,y2)}')                  
+            id = id + 1
+            cv2.circle(img, (img_center_x, img_center_y), 10, (0,255,0),5)
+
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+
+        cv2.imshow("Face Detection with SSD", img)
+
+    cv2.destroyAllWindows()
+    cap.stop()
+
 
 if __name__ == "__main__":
+
+    #------------------------------------------
+    # Initialize for face detection
+
+    # handle command line arguments
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-p", "--prototxt", default="./FR/deploy.prototxt",
+                    help="Caffe 'deploy' prototxt file")
+    ap.add_argument("-m", "--model", default="./FR/res10_300x300_ssd_iter_140000.caffemodel",
+                    help="Pre-trained caffe model")
+    ap.add_argument("-t", "--thresold", type=float, default=0.6,
+                    help="Thresold value to filter weak detections")
+    args = ap.parse_args()
+
+    # This is based on SSD deep learning pretrained model
+    detector = cv2.dnn.readNetFromCaffe(args.prototxt, args.model)
+
+    #print("Real time face detection is starting ... ")
+    #face_detection_realtime(detector, args)
+
+    #thread_fd = threading.Thread(target=fd.face_detection_realtime, args=(detector, args))
+    #thread_fd.start()
+
+    # Feed from computer camera with threading
+    camera_idx = 0
+    #camera_idx = 1
+    cap = video.VideoStream(camera_idx).start()
+
+    MAX_ANGLE = 45*math.pi/180
+    tan_MAX_ANGLE = math.tan(MAX_ANGLE)
+
+    global g_fd_results
+    #------------------------------------------
+
+
 
     # Replace "ODAS_SERVER_IP" and "ODAS_SERVER_PORT" with the desired IP and port for the server
     #odas_server_ip = "192.168.1.6"
@@ -256,8 +350,8 @@ if __name__ == "__main__":
     server_thread_sst = threading.Thread(target=launch_socket_server, args=(odas_server_ip, odas_server_sst_port))
     server_thread_sst.start()
 
-    gcs_stt_thread_stt = threading.Thread(target=speech_recog)
-    gcs_stt_thread_stt.start()
+    thread_gcs_stt = threading.Thread(target=speech_recog)
+    thread_gcs_stt.start()
 
     #dev = usb.core.find(idVendor=0x2886, idProduct=0x0018)
     #Mic_tuning = Tuning(dev)
@@ -289,6 +383,48 @@ if __name__ == "__main__":
     g_speech_recognized = "NULL"
     while True:
         try:
+            #---------------------------
+            #--- face detection - start
+
+            # Getting out image frame by webcam
+            img = cap.read()
+
+            # https://docs.opencv.org/trunk/d6/d0f/group__dnn.html#ga29f34df9376379a603acd8df581ac8d7
+            inputBlob = cv2.dnn.blobFromImage(cv2.resize(
+                img, (300, 300)), 1, (300, 300), (104, 177, 123))
+
+            detector.setInput(inputBlob)
+            detections = detector.forward()
+            img, total_faces, detected_l = fd.find_faces(img, detections, args)
+
+            id = 0
+            g_fd_results = []
+            for detected in detected_l:
+                (x1,x2,y1,y2) = detected['box']
+
+                #width = video_capture.get(cv2.CAP_PROP_FRAME_WIDTH)
+                (h, w) = img.shape[:2]
+                width = w
+                img_center_x = int((x1 + x2)/2)
+                img_center_y = int((y1 + y2)/2)
+                frame_center_x = width/2
+                ratio = frame_center_x - img_center_x
+                img_ang = math.atan(ratio/frame_center_x*tan_MAX_ANGLE)
+                detected['azimuth'] = img_ang
+                g_fd_results.append(detected)
+                #print(f'id: {id}, img_ang: {img_ang*180/math.pi},  detected_boxs: {(x1,x2,y1,y2)}')                  
+                id = id + 1
+                cv2.circle(img, (img_center_x, img_center_y), 10, (0,255,0),5)
+
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+
+            cv2.imshow("Face Detection with SSD", img)
+            #--- face detection - end
+            #---------------------------
+
+
+
             '''
             with sr.Microphone() as source:
                 #r.adjust_for_ambient_noise(source)
@@ -344,6 +480,15 @@ if __name__ == "__main__":
                                     data_y = data[id]['y']
                                     azimuth = math.atan2(data_y, data_x) * 180 / math.pi
                                     print("   azimuth: {:.1f} degree".format(azimuth))
+
+                                    id=0
+                                    for detected in detected_l:
+                                        (x1,x2,y1,y2) = detected['box']
+                                        img_ang = detected['azimuth']
+                                        print(f'id: {id}, img_ang: {img_ang*180/math.pi},  detected_boxs: {(x1,x2,y1,y2)}') 
+                                        id = id + 1
+
+
                 print("\n")
                 print("Say something!")
                     
@@ -352,3 +497,7 @@ if __name__ == "__main__":
             print("Google Cloud Speech could not understand audio")
         except sr.RequestError as e:
             print("Could not request results from Google Cloud Speech service; {0}".format(e))
+
+
+    cv2.destroyAllWindows()
+    cap.stop()        

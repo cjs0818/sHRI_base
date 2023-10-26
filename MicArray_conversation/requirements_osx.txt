@@ -23,6 +23,13 @@ torch==2.0.1
 scikit-learn
 pandas
 
-# For face recpgnition
+
+# For face recognition
 face_recognition
 opencv-python
+
+# For face detection
+imutils
+dlib
+opencv-python
+opencv-contrib-python

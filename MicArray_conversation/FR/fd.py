@@ -21,6 +21,7 @@ import cv2
 import argparse
 import os
 import numpy as np
+import math
 
 
 def draw_fancy_box(img, pt1, pt2, color, thickness, r, d):
@@ -51,9 +52,9 @@ def draw_fancy_box(img, pt1, pt2, color, thickness, r, d):
     cv2.ellipse(img, (x2 - r, y2 - r), (r, r), 0, 0, 90, color, thickness)
 
 
-def find_faces(img, detections):
+def find_faces(img, detections, args):
     total_faces = 0
-
+    detected_l = []
     # Draw boxes around found faces
     for i in range(0, detections.shape[2]):
         # Probability of prediction
@@ -78,17 +79,35 @@ def find_faces(img, detections):
         # show the face number with prediction score
         cv2.putText(img, label, (x1 - 20, y1 - 20),
                     cv2.FONT_HERSHEY_TRIPLEX, 0.6, (51, 51, 255), 2)
+        
+        detected = { 'box': (x1,x2,y1,y2)}
+        detected_l.append(detected)
+
+
+        #cv2.circle(img, (img_center_x, img_center_y), 10, (0,255,0),5) 
+
+        #print(f'center: {frame_center_x}, width: {width}')
+        #print(f'ratio: {ratio}')      
+        #print(f'img_ang: {img_ang*180/math.pi}')
+
+    return img, total_faces, detected_l
 
     # show the output frame
-    cv2.imshow("Face Detection with SSD", img)
+    #cv2.imshow("Face Detection with SSD", img)
 
 
-def face_detection_realtime():
+def face_detection_realtime(detector, args):
 
     # Feed from computer camera with threading
     camera_idx = 0
     #camera_idx = 1
     cap = video.VideoStream(camera_idx).start()
+
+
+    MAX_ANGLE = 45*math.pi/180
+    tan_MAX_ANGLE = math.tan(MAX_ANGLE)
+
+    global g_fd_results
 
     while True:
 
@@ -101,9 +120,31 @@ def face_detection_realtime():
 
         detector.setInput(inputBlob)
         detections = detector.forward()
-        find_faces(img, detections)
+        img, total_faces, detected_l = find_faces(img, detections, args)
+
+        id = 0
+        g_fd_results = []
+        for detected in detected_l:
+            (x1,x2,y1,y2) = detected['box']
+
+            #width = video_capture.get(cv2.CAP_PROP_FRAME_WIDTH)
+            (h, w) = img.shape[:2]
+            width = w
+            img_center_x = int((x1 + x2)/2)
+            img_center_y = int((y1 + y2)/2)
+            frame_center_x = width/2
+            ratio = frame_center_x - img_center_x
+            img_ang = math.atan(ratio/frame_center_x*tan_MAX_ANGLE)
+            detected['azimuth'] = img_ang
+            g_fd_results.append(detected)
+            print(f'id: {id}, img_ang: {img_ang*180/math.pi},  detected_boxs: {(x1,x2,y1,y2)}')                  
+            id = id + 1
+            cv2.circle(img, (img_center_x, img_center_y), 10, (0,255,0),5)
+
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
+
+        cv2.imshow("Face Detection with SSD", img)
 
     cv2.destroyAllWindows()
     cap.stop()
@@ -124,4 +165,4 @@ if __name__ == "__main__":
     detector = cv2.dnn.readNetFromCaffe(args.prototxt, args.model)
 
     print("Real time face detection is starting ... ")
-    face_detection_realtime()
+    face_detection_realtime(detector, args)
