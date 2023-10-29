@@ -12,6 +12,7 @@ webrtcvad
 
 
 respeaker
+google-cloud-speech
 SpeechRecognition
 hidapi # This is optional
 

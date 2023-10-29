@@ -264,12 +264,15 @@ if __name__ == "__main__":
     #thread_fd.start()
 
     # Feed from computer camera with threading
+    #camera_idx = 0
     camera_idx = 0
-    #camera_idx = 1
     cap = video.VideoStream(camera_idx).start()
 
-    MAX_ANGLE = 45*math.pi/180
+    #MAX_ANGLE = 45*math.pi/180
+    #MAX_ANGLE = 15*math.pi/180
     tan_MAX_ANGLE = math.tan(MAX_ANGLE)
+    ANG_DIFF_TH = 20*math.pi/180
+    #ANG_DIFF_TH = 10*math.pi/180
 
     global g_fd_results
     #------------------------------------------
@@ -292,11 +295,13 @@ if __name__ == "__main__":
     #server_thread_ssl.start()
 
     server_thread_sst = threading.Thread(target=launch_socket_server, args=(odas_server_ip, odas_server_sst_port))
+    server_thread_sst.daemon = True
     server_thread_sst.start()
 
     thread_gcs_stt = threading.Thread(target=speech_recog)
+    thread_gcs_stt.daemon = True
     thread_gcs_stt.start()
-
+    
     #dev = usb.core.find(idVendor=0x2886, idProduct=0x0018)
     #Mic_tuning = Tuning(dev)
     #print(Mic_tuning.direction)
@@ -332,6 +337,8 @@ if __name__ == "__main__":
             #--- face detection - start
 
             # Getting out image frame by webcam
+            detected_l = []
+            
             img = cap.read()
 
             # https://docs.opencv.org/trunk/d6/d0f/group__dnn.html#ga29f34df9376379a603acd8df581ac8d7
@@ -363,12 +370,13 @@ if __name__ == "__main__":
                 id = id + 1
 
                 color = color_green
-                ang_diff_th = 20*math.pi/180
+                #ang_diff_th = 10*math.pi/180
+                #ANG_DIFF_TH
                 for ssl_result in g_ssl_results:
                     ssl_azimuth = ssl_result['azimuth']
                     ang_diff = math.fabs(ssl_azimuth - img_ang)
-                    #print(f'ang_diff: {ang_diff*180/math.pi}, ang_diff_th: {ang_diff_th*180/math.pi}')
-                    if ang_diff < ang_diff_th:
+                    #print(f'ang_diff: {ang_diff*180/math.pi}, ANG_DIFF_TH: {ANG_DIFF_TH*180/math.pi}')
+                    if ang_diff < ANG_DIFF_TH:
                         color = color_red
 
                 cv2.circle(img, (img_center_x, img_center_y), 10, color,5)
@@ -379,7 +387,7 @@ if __name__ == "__main__":
             cv2.imshow("Face Detection with SSD", img)
             #--- face detection - end
             #---------------------------
-
+            
 
 
             '''
