@@ -107,7 +107,7 @@ ODAS (https://github.com/introlab/odas) is a very cool project to perform sound 
 
 Get ODAS and build it
 ```
-sudo apt install libfftw3-dev libconfig-dev libasound2-dev
+sudo apt install libfftw3-dev libconfig-dev libasound2-dev  # 'libpulse-dev' might be needed if there is an error "No package libpulse-simple' 
 git clone https://github.com/introlab/odas.git
 cd odas
 mkdir build
