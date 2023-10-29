@@ -268,7 +268,7 @@ if __name__ == "__main__":
     camera_idx = 0
     cap = video.VideoStream(camera_idx).start()
 
-    #MAX_ANGLE = 45*math.pi/180
+    MAX_ANGLE = 45*math.pi/180
     #MAX_ANGLE = 15*math.pi/180
     tan_MAX_ANGLE = math.tan(MAX_ANGLE)
     ANG_DIFF_TH = 20*math.pi/180
