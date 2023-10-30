@@ -229,7 +229,7 @@ def listen_print_loop(responses, stream):
         overwrite_chars = ' ' * (num_chars_printed - len(transcript))
 
         if not result.is_final:
-            sys.stdout.write(gcs_stt.RED)
+            sys.stdout.write(gcs_stt.GREEN)
             sys.stdout.write("\033[K")
         
             sys.stdout.write(transcript + overwrite_chars + '\r')
@@ -238,10 +238,11 @@ def listen_print_loop(responses, stream):
             num_chars_printed = len(transcript)
             stream.last_transcript_was_final = False
         else:
-            sys.stdout.write(gcs_stt.GREEN)
+            sys.stdout.write(gcs_stt.RED)
             sys.stdout.write("\033[K")
         
             print(transcript + overwrite_chars)
+            sys.stdout.write(gcs_stt.RESET)
             g_speech_result = 1                 # global
             g_speech_recognized = transcript    # global
 
@@ -278,6 +279,7 @@ def speech_recog():
             sys.stdout.write(
                 "\n" + str(gcs_stt.STREAMING_LIMIT * stream.restart_counter) + ": NEW REQUEST\n"
             )
+            sys.stdout.write(gcs_stt.RESET)
             stream.audio_input = []
             audio_generator = stream.generator()
             requests = (speech.StreamingRecognizeRequest(audio_content=content)
@@ -429,8 +431,6 @@ if __name__ == "__main__":
                 id = id + 1
 
                 color = color_green
-                #ang_diff_th = 10*math.pi/180
-                #ANG_DIFF_TH
                 for ssl_result in g_ssl_results:
                     ssl_azimuth = ssl_result['azimuth']
                     ang_diff = math.fabs(ssl_azimuth - img_ang)
@@ -480,6 +480,7 @@ if __name__ == "__main__":
                 classification = ml.test(test_conversations, test_labels, bOnline)
                 id = 0
                 print(" #---- sc ----#")
+                sys.stdout.write(gcs_stt.RED)
                 if classification[id] == 1:
                     print(f"   [{classification[id] }]: SENIOR! \n")
                 elif classification[id] == 0:
@@ -487,6 +488,7 @@ if __name__ == "__main__":
                 else:
                     print(f"   [{classification[id]}]: NOT DETERMINED! \n")
 
+                sys.stdout.write(gcs_stt.RESET)
 
                 #print(sst_az_list)
                 data = sst_az_list
@@ -497,6 +499,9 @@ if __name__ == "__main__":
                     if 'activity' in data[0]:    # sst
                         if data[0]['activity'] > 0:
                             print(" #---- sst ----#")
+
+                            sys.stdout.write(gcs_stt.RED)
+                            sys.stdout.write("\033[K")
 
                             for id in range(len(data)):
                                 if data[id]['activity'] > 0:
@@ -514,6 +519,9 @@ if __name__ == "__main__":
                                         img_ang = detected['azimuth']
                                         print(f'id: {id}, img_ang: {img_ang*180/math.pi},  detected_boxs: {(x1,x2,y1,y2)}') 
                                         id = id + 1
+
+                            sys.stdout.write(gcs_stt.RESET)
+                            sys.stdout.write("\033[K")
 
 
                 print("\n")
