@@ -38,12 +38,26 @@ from google.cloud import speech
 import pyaudio
 from six.moves import queue
 
-import os
+import os 
+import time
 
 # Audio recording parameters
+STREAMING_LIMIT = 240000  # 4 minutes
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
 
+RED = "\033[0;31m"
+GREEN = "\033[0;32m"
+YELLOW = "\033[0;33m"
+
+def get_current_time() -> int:
+    """Return Current Time in MS.
+
+    Returns:
+        int: Current Time in MS.
+    """
+
+    return int(round(time.time() * 1000))
 
 class MicrophoneStream(object):
     """Opens a recording stream as a generator yielding the audio chunks."""
@@ -54,6 +68,18 @@ class MicrophoneStream(object):
         # Create a thread-safe buffer of audio data
         self._buff = queue.Queue()
         self.closed = True
+
+        # Newly added
+        self.start_time = get_current_time()
+        self.restart_counter = 0
+        self.audio_input = []
+        self.last_audio_input = []
+        self.result_end_time = 0
+        self.is_final_end_time = 0
+        self.final_request_end_time = 0
+        self.bridging_offset = 0
+        self.last_transcript_was_final = False
+        self.new_stream = True
 
     def __enter__(self):
         self._audio_interface = pyaudio.PyAudio()

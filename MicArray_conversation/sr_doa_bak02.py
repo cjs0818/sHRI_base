@@ -38,6 +38,12 @@ import STT.gcs_stt as gcs_stt
 from google.cloud import speech
 import re
 
+# For fd
+import FR.fd as fd
+import argparse
+import cv2
+from imutils import face_utils, video
+
 
 from tuning import Tuning
 import usb.core
@@ -53,6 +59,15 @@ sst_az_list = []
 sst_az_stream = []
 lock_for_sst_az_list = Lock()
 verbose = 0   # 0 to disable print in process_ssl_sst_result,   1 to enable it
+
+def get_current_time() -> int:
+    """Return Current Time in MS.
+
+    Returns:
+        int: Current Time in MS.
+    """
+
+    return int(round(time.time() * 1000))
 
 def process_ssl_sst_result(result_str):
     # Parse the JSON data to extract relevant information
@@ -153,7 +168,7 @@ def launch_socket_server(ip, port):
         print("Server shutdown.")
 
 
-def listen_print_loop(responses):
+def listen_print_loop(responses, stream):
     """Iterates through server responses and prints them.
     The responses passed is a generator that will block until a response
     is provided by the server.
@@ -170,6 +185,10 @@ def listen_print_loop(responses):
     num_chars_printed = 0
     transcript = "NULL"
     for response in responses:
+        if get_current_time() - stream.start_time > gcs_stt.STREAMING_LIMIT:
+            stream.start_time = get_current_time()
+            break
+
         if not response.results:
             continue
 
@@ -183,6 +202,25 @@ def listen_print_loop(responses):
         # Display the transcription of the top alternative.
         transcript = result.alternatives[0].transcript
 
+
+        result_seconds = 0
+        result_micros = 0
+
+        if result.result_end_time.seconds:
+            result_seconds = result.result_end_time.seconds
+
+        if result.result_end_time.microseconds:
+            result_micros = result.result_end_time.microseconds
+
+        stream.result_end_time = int((result_seconds * 1000) + (result_micros / 1000))
+
+        corrected_time = (
+            stream.result_end_time
+            - stream.bridging_offset
+            + (gcs_stt.STREAMING_LIMIT * stream.restart_counter)
+        )
+
+
         # Display interim results, but with a carriage return at the end of the
         # line, so subsequent lines will overwrite them.
         #
@@ -191,14 +229,24 @@ def listen_print_loop(responses):
         overwrite_chars = ' ' * (num_chars_printed - len(transcript))
 
         if not result.is_final:
+            sys.stdout.write(gcs_stt.RED)
+            sys.stdout.write("\033[K")
+        
             sys.stdout.write(transcript + overwrite_chars + '\r')
             sys.stdout.flush()
 
             num_chars_printed = len(transcript)
+            stream.last_transcript_was_final = False
         else:
+            sys.stdout.write(gcs_stt.GREEN)
+            sys.stdout.write("\033[K")
+        
             print(transcript + overwrite_chars)
             g_speech_result = 1                 # global
             g_speech_recognized = transcript    # global
+
+            stream.is_final_end_time = stream.result_end_time
+            stream.last_transcript_was_final = True
 
             # Exit recognition if any of the transcribed phrases could be
             # one of our keywords.
@@ -214,7 +262,6 @@ def speech_recog():
     # for a list of supported languages.
     language_code = 'ko-KR'  # a BCP-47 language tag
 
-
     client = speech.SpeechClient()
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
@@ -226,18 +273,70 @@ def speech_recog():
     
     print("Say something!")
     with gcs_stt.MicrophoneStream(gcs_stt.RATE, gcs_stt.CHUNK) as stream:
-        audio_generator = stream.generator()
-        requests = (speech.StreamingRecognizeRequest(audio_content=content)
-                    for content in audio_generator)
+        while not stream.closed:
+            sys.stdout.write(gcs_stt.YELLOW)
+            sys.stdout.write(
+                "\n" + str(gcs_stt.STREAMING_LIMIT * stream.restart_counter) + ": NEW REQUEST\n"
+            )
+            stream.audio_input = []
+            audio_generator = stream.generator()
+            requests = (speech.StreamingRecognizeRequest(audio_content=content)
+                        for content in audio_generator)
 
-        responses = client.streaming_recognize(streaming_config, requests)
+            responses = client.streaming_recognize(streaming_config, requests)
 
-        # Now, put the transcription responses to use. 
-        listen_print_loop(responses)
+            # Now, put the transcription responses to use. 
+            listen_print_loop(responses, stream)
 
+            if stream.result_end_time > 0: 
+                stream.final_request_end_time = stream.is_final_end_time
+            stream.result_end_time = 0
+            stream.last_audio_input = []
+            stream.last_audio_input = stream.audio_input
+            stream.audio_input = []
+            stream.restart_counter = stream.restart_counter + 1
+
+            if not stream.last_transcript_was_final:
+                sys.stdout.write("\n")
+            stream.new_stream = True
 
 
 if __name__ == "__main__":
+
+    #------------------------------------------
+    # Initialize for face detection
+
+    # handle command line arguments
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-p", "--prototxt", default="./FR/deploy.prototxt",
+                    help="Caffe 'deploy' prototxt file")
+    ap.add_argument("-m", "--model", default="./FR/res10_300x300_ssd_iter_140000.caffemodel",
+                    help="Pre-trained caffe model")
+    ap.add_argument("-t", "--thresold", type=float, default=0.6,
+                    help="Thresold value to filter weak detections")
+    args = ap.parse_args()
+
+    # This is based on SSD deep learning pretrained model
+    detector = cv2.dnn.readNetFromCaffe(args.prototxt, args.model)
+
+    #thread_fd = threading.Thread(target=fd.face_detection_realtime, args=(detector, args))
+    #thread_fd.start()
+
+    # Feed from computer camera with threading
+    #camera_idx = 0
+    camera_idx = 0
+    cap = video.VideoStream(camera_idx).start()
+
+    MAX_ANGLE = 45*math.pi/180
+    #MAX_ANGLE = 15*math.pi/180
+    tan_MAX_ANGLE = math.tan(MAX_ANGLE)
+    ANG_DIFF_TH = 20*math.pi/180
+    #ANG_DIFF_TH = 10*math.pi/180
+
+    global g_fd_results
+    #------------------------------------------
+
+
 
     # Replace "ODAS_SERVER_IP" and "ODAS_SERVER_PORT" with the desired IP and port for the server
     #odas_server_ip = "192.168.1.6"
@@ -255,13 +354,13 @@ if __name__ == "__main__":
     #server_thread_ssl.start()
 
     server_thread_sst = threading.Thread(target=launch_socket_server, args=(odas_server_ip, odas_server_sst_port))
+    server_thread_sst.daemon = True
     server_thread_sst.start()
 
-    '''
-    gcs_stt_thread_stt = threading.Thread(target=speech_recog)
-    gcs_stt_thread_stt.start()
-    '''
-
+    thread_gcs_stt = threading.Thread(target=speech_recog)
+    thread_gcs_stt.daemon = True
+    thread_gcs_stt.start()
+    
     #dev = usb.core.find(idVendor=0x2886, idProduct=0x0018)
     #Mic_tuning = Tuning(dev)
     #print(Mic_tuning.direction)
@@ -269,16 +368,14 @@ if __name__ == "__main__":
     # obtain audio from the microphone
     r = sr.Recognizer()
 
-
     # recognize speech using Google Cloud Speech
     #GOOGLE_CLOUD_SPEECH_CREDENTIALS = r"""INSERT THE CONTENTS OF THE GOOGLE CLOUD SPEECH JSON CREDENTIALS FILE HERE"""
-    GOOGLE_CLOUD_SPEECH_CREDENTIALS = "/home/jschoi/work/sHRI_base/STT/cjsstt.json"
+    #GOOGLE_CLOUD_SPEECH_CREDENTIALS = "/home/jschoi/work/sHRI_base/STT/cjsstt.json"
 
 
     # text_classification
     #BASE_PATH='/home/jschoi/work/sHRI_base/conversation/'
     ml = MachineLearning(BASE_PATH)
-
 
     bOnline = True
     #test_conversations = []
@@ -291,9 +388,68 @@ if __name__ == "__main__":
 
     n_prevTimeStamp = 0
     g_speech_result = 0
+    g_ssl_results = []
     g_speech_recognized = "NULL"
     while True:
         try:
+            #---------------------------
+            #--- face detection - start
+
+            # Getting out image frame by webcam
+            detected_l = []
+            
+            img = cap.read()
+
+            # https://docs.opencv.org/trunk/d6/d0f/group__dnn.html#ga29f34df9376379a603acd8df581ac8d7
+            inputBlob = cv2.dnn.blobFromImage(cv2.resize(
+                img, (300, 300)), 1, (300, 300), (104, 177, 123))
+
+            detector.setInput(inputBlob)
+            detections = detector.forward()
+            img, total_faces, detected_l = fd.find_faces(img, detections, args)
+
+            id = 0
+            g_fd_results = []
+            color_green = (0,255,0)
+            color_red = (0,0,255)
+            for detected in detected_l:
+                (x1,x2,y1,y2) = detected['box']
+
+                #width = video_capture.get(cv2.CAP_PROP_FRAME_WIDTH)
+                (h, w) = img.shape[:2]
+                width = w
+                img_center_x = int((x1 + x2)/2)
+                img_center_y = int((y1 + y2)/2)
+                frame_center_x = width/2
+                ratio = frame_center_x - img_center_x
+                img_ang = math.atan(ratio/frame_center_x*tan_MAX_ANGLE)
+                detected['azimuth'] = img_ang
+                g_fd_results.append(detected)
+                #print(f'id: {id}, img_ang: {img_ang*180/math.pi},  detected_boxs: {(x1,x2,y1,y2)}')                  
+                id = id + 1
+
+                color = color_green
+                #ang_diff_th = 10*math.pi/180
+                #ANG_DIFF_TH
+                for ssl_result in g_ssl_results:
+                    ssl_azimuth = ssl_result['azimuth']
+                    ang_diff = math.fabs(ssl_azimuth - img_ang)
+                    #print(f'ang_diff: {ang_diff*180/math.pi}, ANG_DIFF_TH: {ANG_DIFF_TH*180/math.pi}')
+                    if ang_diff < ANG_DIFF_TH:
+                        color = color_red
+
+                cv2.circle(img, (img_center_x, img_center_y), 10, color,5)
+
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+
+            cv2.imshow("Face Detection with SSD", img)
+            #--- face detection - end
+            #---------------------------
+            
+
+
+            '''
             with sr.Microphone() as source:
                 #r.adjust_for_ambient_noise(source)
                 print("Say something!")
@@ -306,53 +462,69 @@ if __name__ == "__main__":
 
             # Google web speech API
             #test_conversations.append(r.recognize_google(audio, language="ko-KR"))
-            
             '''
+
             if g_speech_result:
                 g_speech_result = 0
+                g_ssl_results = []
 
                 test_conversations = []
                 test_conversations.append(g_speech_recognized)
-            '''
-
-            test_labels = []
-            test_labels.append(0)
-            #print("Google Cloud Speech thinks you said " + test_conversations[0])
-            #print("Speaker Direction : {}".format(Mic_tuning.direction))
-
-
-            classification = ml.test(test_conversations, test_labels, bOnline)
-            id = 0
-            print(" #---- sc ----#")
-            if classification[id] == 1:
-                print(f"   [{classification[id] }]: SENIOR! \n")
-            elif classification[id] == 0:
-                print(f"   [{classification[id]}]: JUNIOR! \n")
-            else:
-                print(f"   [{classification[id]}]: NOT DETERMINED! \n")
-
-
-            #print(sst_az_list)
-            data = sst_az_list
             
-            if len(data) > 0 and n_prevTimeStamp != sst_az_stream['timeStamp']:
-                print(f" n_prevTimeStamp: {n_prevTimeStamp}, current timeStamp: {sst_az_stream['timeStamp']}")
-                n_prevTimeStamp = sst_az_stream['timeStamp']
-                if 'activity' in data[0]:    # sst
-                    if data[0]['activity'] > 0:
-                        print(" #---- sst ----#")
+                test_labels = []
+                test_labels.append(0)
+                #print("Google Cloud Speech thinks you said " + test_conversations[0])
+                #print("Speaker Direction : {}".format(Mic_tuning.direction))
 
-                        for id in range(len(data)):
-                            if data[id]['activity'] > 0:
-                                print(f"   sst: {data[id]}")
-                                data_x = data[id]['x']
-                                data_y = data[id]['y']
-                                azimuth = math.atan2(data_y, data_x) * 180 / math.pi
-                                print("   azimuth: {:.1f} degree".format(azimuth))
 
+                classification = ml.test(test_conversations, test_labels, bOnline)
+                id = 0
+                print(" #---- sc ----#")
+                if classification[id] == 1:
+                    print(f"   [{classification[id] }]: SENIOR! \n")
+                elif classification[id] == 0:
+                    print(f"   [{classification[id]}]: JUNIOR! \n")
+                else:
+                    print(f"   [{classification[id]}]: NOT DETERMINED! \n")
+
+
+                #print(sst_az_list)
+                data = sst_az_list
+                
+                if len(data) > 0 and n_prevTimeStamp != sst_az_stream['timeStamp']:
+                    print(f" n_prevTimeStamp: {n_prevTimeStamp}, current timeStamp: {sst_az_stream['timeStamp']}")
+                    n_prevTimeStamp = sst_az_stream['timeStamp']
+                    if 'activity' in data[0]:    # sst
+                        if data[0]['activity'] > 0:
+                            print(" #---- sst ----#")
+
+                            for id in range(len(data)):
+                                if data[id]['activity'] > 0:
+                                    print(f"   sst: {data[id]}")
+                                    data_x = data[id]['x']
+                                    data_y = data[id]['y']
+                                    azimuth = math.atan2(data_y, data_x)
+                                    ssl_result = {'azimuth': azimuth}
+                                    g_ssl_results.append(ssl_result)
+                                    print("   azimuth: {:.1f} degree".format(azimuth * 180/math.pi))
+
+                                    id=0
+                                    for detected in detected_l:
+                                        (x1,x2,y1,y2) = detected['box']
+                                        img_ang = detected['azimuth']
+                                        print(f'id: {id}, img_ang: {img_ang*180/math.pi},  detected_boxs: {(x1,x2,y1,y2)}') 
+                                        id = id + 1
+
+
+                print("\n")
+                print("Say something!")
                     
 
         except sr.UnknownValueError:
             print("Google Cloud Speech could not understand audio")
         except sr.RequestError as e:
             print("Could not request results from Google Cloud Speech service; {0}".format(e))
+
+
+    cv2.destroyAllWindows()
+    cap.stop()        

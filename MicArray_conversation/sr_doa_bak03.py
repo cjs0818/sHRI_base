@@ -60,15 +60,6 @@ sst_az_stream = []
 lock_for_sst_az_list = Lock()
 verbose = 0   # 0 to disable print in process_ssl_sst_result,   1 to enable it
 
-def get_current_time() -> int:
-    """Return Current Time in MS.
-
-    Returns:
-        int: Current Time in MS.
-    """
-
-    return int(round(time.time() * 1000))
-
 def process_ssl_sst_result(result_str):
     # Parse the JSON data to extract relevant information
     try:
@@ -168,7 +159,7 @@ def launch_socket_server(ip, port):
         print("Server shutdown.")
 
 
-def listen_print_loop(responses, stream):
+def listen_print_loop(responses):
     """Iterates through server responses and prints them.
     The responses passed is a generator that will block until a response
     is provided by the server.
@@ -185,10 +176,6 @@ def listen_print_loop(responses, stream):
     num_chars_printed = 0
     transcript = "NULL"
     for response in responses:
-        if get_current_time() - stream.start_time > gcs_stt.STREAMING_LIMIT:
-            stream.start_time = get_current_time()
-            break
-
         if not response.results:
             continue
 
@@ -202,25 +189,6 @@ def listen_print_loop(responses, stream):
         # Display the transcription of the top alternative.
         transcript = result.alternatives[0].transcript
 
-
-        result_seconds = 0
-        result_micros = 0
-
-        if result.result_end_time.seconds:
-            result_seconds = result.result_end_time.seconds
-
-        if result.result_end_time.microseconds:
-            result_micros = result.result_end_time.microseconds
-
-        stream.result_end_time = int((result_seconds * 1000) + (result_micros / 1000))
-
-        corrected_time = (
-            stream.result_end_time
-            - stream.bridging_offset
-            + (gcs_stt.STREAMING_LIMIT * stream.restart_counter)
-        )
-
-
         # Display interim results, but with a carriage return at the end of the
         # line, so subsequent lines will overwrite them.
         #
@@ -229,24 +197,14 @@ def listen_print_loop(responses, stream):
         overwrite_chars = ' ' * (num_chars_printed - len(transcript))
 
         if not result.is_final:
-            sys.stdout.write(gcs_stt.RED)
-            sys.stdout.write("\033[K")
-        
             sys.stdout.write(transcript + overwrite_chars + '\r')
             sys.stdout.flush()
 
             num_chars_printed = len(transcript)
-            stream.last_transcript_was_final = False
         else:
-            sys.stdout.write(gcs_stt.GREEN)
-            sys.stdout.write("\033[K")
-        
             print(transcript + overwrite_chars)
             g_speech_result = 1                 # global
             g_speech_recognized = transcript    # global
-
-            stream.is_final_end_time = stream.result_end_time
-            stream.last_transcript_was_final = True
 
             # Exit recognition if any of the transcribed phrases could be
             # one of our keywords.
@@ -273,32 +231,15 @@ def speech_recog():
     
     print("Say something!")
     with gcs_stt.MicrophoneStream(gcs_stt.RATE, gcs_stt.CHUNK) as stream:
-        while not stream.closed:
-            sys.stdout.write(gcs_stt.YELLOW)
-            sys.stdout.write(
-                "\n" + str(gcs_stt.STREAMING_LIMIT * stream.restart_counter) + ": NEW REQUEST\n"
-            )
-            stream.audio_input = []
-            audio_generator = stream.generator()
-            requests = (speech.StreamingRecognizeRequest(audio_content=content)
-                        for content in audio_generator)
+        audio_generator = stream.generator()
+        requests = (speech.StreamingRecognizeRequest(audio_content=content)
+                    for content in audio_generator)
 
-            responses = client.streaming_recognize(streaming_config, requests)
+        responses = client.streaming_recognize(streaming_config, requests)
 
-            # Now, put the transcription responses to use. 
-            listen_print_loop(responses, stream)
+        # Now, put the transcription responses to use. 
+        listen_print_loop(responses)
 
-            if stream.result_end_time > 0: 
-                stream.final_request_end_time = stream.is_final_end_time
-            stream.result_end_time = 0
-            stream.last_audio_input = []
-            stream.last_audio_input = stream.audio_input
-            stream.audio_input = []
-            stream.restart_counter = stream.restart_counter + 1
-
-            if not stream.last_transcript_was_final:
-                sys.stdout.write("\n")
-            stream.new_stream = True
 
 
 if __name__ == "__main__":
