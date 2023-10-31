@@ -32,8 +32,22 @@ elif sys.platform == "darwin":
 # Load a pre-trained shape predictor model (68 facial landmarks)
 shape_predictor = dlib.shape_predictor(FR_PATH+"shape_predictor_68_face_landmarks_GTX.dat") # https://github.com/davisking/dlib-models
 
+# https://pyimagesearch.com/2017/04/10/detect-eyes-nose-lips-jaw-dlib-opencv-python/
+# define a dictionary that maps the indexes of the facial
+# landmarks to specific face regions
+FACIAL_LANDMARKS_IDXS = [
+	("mouth", (48, 68)),
+	("right_eyebrow", (17, 22)),
+	("left_eyebrow", (22, 27)),
+	("right_eye", (36, 42)),
+	("left_eye", (42, 48)),
+	("nose", (27, 35)),
+	("jaw", (0, 17))
+]
 # Initialize variables for tracking lip motion
 lip_points = list(range(48, 68))  # Indices for the lip landmarks
+jaw_points = list(range(0,17))  # Indices for the jaw landmarks
+face_points = list(range(0,68))
 #lip_threshold = 10  # Lip motion threshold
 lip_threshold = 20  # Lip motion threshold
 
@@ -71,20 +85,22 @@ def visual_VAD(frame, face_roi):
 
     # Extract lip landmarks
     lip_landmarks = np.array([(shape.part(i).x, shape.part(i).y) for i in lip_points])
+    jaw_landmarks = np.array([(shape.part(i).x, shape.part(i).y) for i in jaw_points])
+    face_landmarks = np.array([(shape.part(i).x, shape.part(i).y) for i in face_points])
+
+    landmarks = face_landmarks
 
     # Calculate lip motion
     lip_motion = np.mean(lip_landmarks[:, 1]) - lip_landmarks[0, 1]
-
-    print(f"lip_motion: {lip_motion},  lip_threshold: {lip_threshold}")
+    #print(f"lip_motion: {lip_motion},  lip_threshold: {lip_threshold}")
 
     if lip_motion > lip_threshold:
         # Lip motion detected, someone has started talking
         voice_activity = True
-        print(f"True \n")
     else:
         voice_activity = False
     
-    return voice_activity
+    return voice_activity, landmarks
 
 def find_faces(img, detections, args):
     total_faces = 0
@@ -165,7 +181,9 @@ def face_detection_realtime(detector, args):
             face_roi = dlib.rectangle(int(x1), int(y1), int(x2), int(y2))
             #print(face_roi)
 
-            v_VAD = visual_VAD(img, face_roi)
+            v_VAD, landmarks = visual_VAD(img, face_roi)
+            for landmark in landmarks:
+                cv2.circle(img, (landmark[0], landmark[1]), 4, (0,255,0), 2)
 
 
             #width = video_capture.get(cv2.CAP_PROP_FRAME_WIDTH)

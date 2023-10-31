@@ -46,10 +46,16 @@ STREAMING_LIMIT = 240000  # 4 minutes
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
 
-RED = "\033[0;31m"
+
+
+RED   = "\033[1;31m"  
 GREEN = "\033[0;32m"
 YELLOW = "\033[0;33m"
+BLUE  = "\033[1;34m"
+CYAN  = "\033[1;36m"
 RESET = "\033[0;0m"
+BOLD    = "\033[;1m"
+REVERSE = "\033[;7m"
 
 def get_current_time() -> int:
     """Return Current Time in MS.

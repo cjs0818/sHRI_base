@@ -229,8 +229,8 @@ def listen_print_loop(responses, stream):
         overwrite_chars = ' ' * (num_chars_printed - len(transcript))
 
         if not result.is_final:
-            sys.stdout.write(gcs_stt.GREEN)
-            sys.stdout.write("\033[K")
+            #sys.stdout.write(gcs_stt.GREEN)
+            #sys.stdout.write("\033[K")
         
             sys.stdout.write(transcript + overwrite_chars + '\r')
             sys.stdout.flush()
@@ -238,12 +238,12 @@ def listen_print_loop(responses, stream):
             num_chars_printed = len(transcript)
             stream.last_transcript_was_final = False
         else:
-            sys.stdout.write(gcs_stt.RED)
-            sys.stdout.write("\033[K")
+            #sys.stdout.write(gcs_stt.RED)
+            #sys.stdout.write("\033[K")
         
             print(transcript + overwrite_chars)
-            sys.stdout.write(gcs_stt.RESET)
-            sys.stdout.write("\033[K")
+            #sys.stdout.write(gcs_stt.RESET)
+            #sys.stdout.write("\033[K")
             g_speech_result = 1                 # global
             g_speech_recognized = transcript    # global
 
@@ -328,7 +328,7 @@ if __name__ == "__main__":
 
     # Feed from computer camera with threading
     #camera_idx = 0
-    camera_idx = 0
+    camera_idx = 1
     cap = video.VideoStream(camera_idx).start()
 
     MAX_ANGLE = 45*math.pi/180
@@ -483,15 +483,19 @@ if __name__ == "__main__":
                 classification = ml.test(test_conversations, test_labels, bOnline)
                 id = 0
                 print(" #---- sc ----#")
-                sys.stdout.write(gcs_stt.RED)
                 if classification[id] == 1:
-                    print(f"   [{classification[id] }]: SENIOR! \n")
+                    sys.stdout.write(gcs_stt.RED)
+                    sys.stdout.write("\033[K")
+                    print(f"   [{classification[id] }]: SENIOR! ({g_speech_recognized})\n")
                 elif classification[id] == 0:
-                    print(f"   [{classification[id]}]: JUNIOR! \n")
+                    sys.stdout.write(gcs_stt.BLUE)
+                    sys.stdout.write("\033[K")
+                    print(f"   [{classification[id]}]: JUNIOR! ({g_speech_recognized})\n")
                 else:
-                    print(f"   [{classification[id]}]: NOT DETERMINED! \n")
+                    print(f"   [{classification[id]}]: NOT DETERMINED! ({g_speech_recognized})\n")
 
                 sys.stdout.write(gcs_stt.RESET)
+                sys.stdout.write("\033[K")
 
                 #print(sst_az_list)
                 data = sst_az_list
@@ -503,7 +507,7 @@ if __name__ == "__main__":
                         if data[0]['activity'] > 0:
                             print(" #---- sst ----#")
 
-                            sys.stdout.write(gcs_stt.RED)
+                            sys.stdout.write(gcs_stt.GREEN)
                             sys.stdout.write("\033[K")
 
                             for id in range(len(data)):
