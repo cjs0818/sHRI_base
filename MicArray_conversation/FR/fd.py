@@ -22,7 +22,20 @@ import argparse
 import os
 import numpy as np
 import math
+import sys
 
+if sys.platform == "linux" or sys.platform == "linux2":
+    FR_PATH = '/home/jschoi/work/sHRI_base/MicArray_conversation/FR/' # for Linux
+elif sys.platform == "darwin":
+    FR_PATH='/Users/jschoi/work/sHRI_base/MicArray_conversation/FR/' # for macOS 
+
+# Load a pre-trained shape predictor model (68 facial landmarks)
+shape_predictor = dlib.shape_predictor(FR_PATH+"shape_predictor_68_face_landmarks_GTX.dat") # https://github.com/davisking/dlib-models
+
+# Initialize variables for tracking lip motion
+lip_points = list(range(48, 68))  # Indices for the lip landmarks
+#lip_threshold = 10  # Lip motion threshold
+lip_threshold = 20  # Lip motion threshold
 
 def draw_fancy_box(img, pt1, pt2, color, thickness, r, d):
     '''
@@ -51,6 +64,27 @@ def draw_fancy_box(img, pt1, pt2, color, thickness, r, d):
     cv2.line(img, (x2, y2 - r), (x2, y2 - r - d), color, thickness)
     cv2.ellipse(img, (x2 - r, y2 - r), (r, r), 0, 0, 90, color, thickness)
 
+def visual_VAD(frame, face_roi):
+        
+    # Detect facial landmarks
+    shape = shape_predictor(frame, face_roi)
+
+    # Extract lip landmarks
+    lip_landmarks = np.array([(shape.part(i).x, shape.part(i).y) for i in lip_points])
+
+    # Calculate lip motion
+    lip_motion = np.mean(lip_landmarks[:, 1]) - lip_landmarks[0, 1]
+
+    print(f"lip_motion: {lip_motion},  lip_threshold: {lip_threshold}")
+
+    if lip_motion > lip_threshold:
+        # Lip motion detected, someone has started talking
+        voice_activity = True
+        print(f"True \n")
+    else:
+        voice_activity = False
+    
+    return voice_activity
 
 def find_faces(img, detections, args):
     total_faces = 0
@@ -126,6 +160,13 @@ def face_detection_realtime(detector, args):
         g_fd_results = []
         for detected in detected_l:
             (x1,x2,y1,y2) = detected['box']
+
+            #face_roi = img[y1:y2, x1:x2]
+            face_roi = dlib.rectangle(int(x1), int(y1), int(x2), int(y2))
+            #print(face_roi)
+
+            v_VAD = visual_VAD(img, face_roi)
+
 
             #width = video_capture.get(cv2.CAP_PROP_FRAME_WIDTH)
             (h, w) = img.shape[:2]

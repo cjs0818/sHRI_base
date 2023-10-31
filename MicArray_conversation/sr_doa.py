@@ -419,6 +419,7 @@ if __name__ == "__main__":
             for detected in detected_l:
                 (x1,x2,y1,y2) = detected['box']
 
+                #face_roi = img[y1:y2, x1:x2]
                 #width = video_capture.get(cv2.CAP_PROP_FRAME_WIDTH)
                 (h, w) = img.shape[:2]
                 width = w
@@ -526,7 +527,7 @@ if __name__ == "__main__":
                             sys.stdout.write("\033[K")
 
 
-                print("\n")
+                #print("\n")
                 print("Say something!")
                     
 
