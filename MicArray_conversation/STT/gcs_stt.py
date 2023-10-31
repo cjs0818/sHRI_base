@@ -207,6 +207,7 @@ def main():
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
         sample_rate_hertz=RATE,
+        model="latest_long",    # To speed up the response of 'is_final'
         language_code=language_code)
     streaming_config = speech.StreamingRecognitionConfig(
         config=config,
@@ -221,6 +222,7 @@ def main():
 
         # Now, put the transcription responses to use.
         listen_print_loop(responses)
+        #print("after listen_print_loop")
 
         '''
         for response in responses:

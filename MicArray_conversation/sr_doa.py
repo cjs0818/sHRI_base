@@ -243,6 +243,7 @@ def listen_print_loop(responses, stream):
         
             print(transcript + overwrite_chars)
             sys.stdout.write(gcs_stt.RESET)
+            sys.stdout.write("\033[K")
             g_speech_result = 1                 # global
             g_speech_recognized = transcript    # global
 
@@ -267,6 +268,7 @@ def speech_recog():
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
         sample_rate_hertz=gcs_stt.RATE,
+        model="latest_long",    # To speed up the response of 'is_final'
         language_code=language_code)
     streaming_config = speech.StreamingRecognitionConfig(
         config=config,
