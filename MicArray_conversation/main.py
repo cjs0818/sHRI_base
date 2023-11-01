@@ -55,8 +55,7 @@ from text_classification import MachineLearning
 
 global g_speech_recognized, g_speech_result
 global g_fd_results, n_prevTimeStamp
-global g_ssl_results
-global g_sst_az_list, g_sst_az_stream
+global g_ssl_results, g_sst_az_list, g_sst_az_stream, g_azimuth_offset
 global g_start_time
 
 g_sst_az_list = []
@@ -64,14 +63,17 @@ g_sst_az_stream = []
 lock_for_g_sst_az_list = Lock()
 verbose = 0   # 0 to disable print in process_ssl_sst_result,   1 to enable it
 
-global g_human
-
 
 MAX_ANGLE = 45*math.pi/180
 #MAX_ANGLE = 15*math.pi/180
 tan_MAX_ANGLE = math.tan(MAX_ANGLE)
 ANG_DIFF_TH = 20*math.pi/180
 #ANG_DIFF_TH = 10*math.pi/180
+
+def set_azimuth_offset(azimuth):
+    global g_azimuth_offset
+    g_azimuth_offset = azimuth
+
 
 def get_current_time() -> int:
     """Return Current Time in MS.
@@ -400,9 +402,9 @@ def face_detection(detector, cap, args):
 
 
 
-def sst_check():
+def sst_check(g_speech_recognized):
     global g_fd_results, n_prevTimeStamp
-    global g_sst_az_stream, g_sst_az_list
+    global g_sst_az_stream, g_sst_az_list, g_azimuth_offset
 
     #print(g_sst_az_list)
     data = g_sst_az_list
@@ -420,15 +422,26 @@ def sst_check():
                         print(f"   sst: {data[id]}")
                         data_x = data[id]['x']
                         data_y = data[id]['y']
-                        azimuth = math.atan2(data_y, data_x)
+
+                        azimuth_temp = math.atan2(data_y, data_x)
+                        azimuth = azimuth_temp - g_azimuth_offset
+
                         ssl_result = {'azimuth': azimuth, 'time': get_current_time()}
                         ssl_results.append(ssl_result)
-                        
+
                         sys.stdout.write(gcs_stt.GREEN)
                         sys.stdout.write("\033[K")
-                        print("   azimuth: {:.1f} degree".format(azimuth * 180/math.pi))
+                        print("   azimuth: {:.1f} degree, [azimuth_temp, g_azimuth_offset]: [{:.1f}, {:.1f}] degree".format(
+                            azimuth*180/math.pi, azimuth_temp*180/math.pi, g_azimuth_offset*180/math.pi))
                         sys.stdout.write(gcs_stt.RESET)
                         sys.stdout.write("\033[K")
+
+                        AZIMUTH_OFFSET_CMD = ["원점 세팅", "원점 조정", "원점 조종"]
+                        for cmd in AZIMUTH_OFFSET_CMD:
+                            if cmd in g_speech_recognized:
+                                set_azimuth_offset(azimuth_temp) # g_azimuth_offset <- azimuth
+                                print("   g_azimuth_offset is set as {:.1f} degree".format(azimuth*180/math.pi))
+                                return ssl_results
 
                         id=0
                         for detected in g_fd_results:
@@ -463,6 +476,8 @@ if __name__ == "__main__":
     g_speech_result = 0 # global
     g_ssl_results = []  # global
     g_speech_recognized = "NULL"    # global
+
+    g_azimuth_offset = 0
 
     # Initialize for face detection
     # camera index 0: internal camera, 1~: external camera
@@ -575,7 +590,7 @@ if __name__ == "__main__":
 
                 #---------------------------
                 #--- sound source tracking (DoA)
-                g_ssl_results = sst_check()
+                g_ssl_results = sst_check(g_speech_recognized)
                 #---------------------------
 
                 print("Say something!")
