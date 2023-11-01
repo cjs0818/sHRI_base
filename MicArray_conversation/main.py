@@ -147,7 +147,7 @@ def process_ssl_sst_result(result_str):
                         data_y = data[id]['y']
                         azimuth = math.atan2(data_y, data_x) * 180 / math.pi
                         if verbose:
-                            print("     azimuth: {:.1f} degree".format(azimuth))
+                            print("     azimuth: {:.1f} deg".format(azimuth))
                     if verbose:
                         print("   #------ sst : end ------#")
             else:
@@ -431,7 +431,7 @@ def sst_check(g_speech_recognized):
 
                         sys.stdout.write(gcs_stt.GREEN)
                         sys.stdout.write("\033[K")
-                        print("   azimuth: {:.1f} degree, [azimuth_temp, g_azimuth_offset]: [{:.1f}, {:.1f}] degree".format(
+                        print("   azimuth: {:.1f} deg, [azimuth_temp, g_azimuth_offset]: [{:.1f}, {:.1f}] deg".format(
                             azimuth*180/math.pi, azimuth_temp*180/math.pi, g_azimuth_offset*180/math.pi))
                         sys.stdout.write(gcs_stt.RESET)
                         sys.stdout.write("\033[K")
@@ -440,7 +440,7 @@ def sst_check(g_speech_recognized):
                         for cmd in AZIMUTH_OFFSET_CMD:
                             if cmd in g_speech_recognized:
                                 set_azimuth_offset(azimuth_temp) # g_azimuth_offset <- azimuth
-                                print("   g_azimuth_offset is set as {:.1f} degree".format(azimuth*180/math.pi))
+                                print("   g_azimuth_offset is set as {:.1f} deg".format(azimuth*180/math.pi))
                                 return ssl_results
 
                         id=0

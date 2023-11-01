@@ -5,8 +5,13 @@ click==7.0
 pocketsphinx  # sudo pip install pocketsphinx
 webrtcvad
 
+
 # You need to install portaudio19-dev first as 'sudo apt-get install portaudio19-dev' for installing pyaudio
-pyaudio
+pyaudio   # error in osx
+# In OSX
+#brew install portaudio flac
+
+
 
 respeaker
 google-cloud-speech
@@ -33,3 +38,8 @@ opencv-contrib-python
 
 # For tts
 gTTS
+
+
+# For dialogue
+Flask
+google-cloud-dialogflow
