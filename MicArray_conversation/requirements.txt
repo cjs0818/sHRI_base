@@ -41,5 +41,8 @@ gTTS
 
 
 # For dialogue
-Flask
-google-cloud-dialogflow
+#Flask
+#google-cloud-dialogflow
+
+# For ChatGPT
+openai
