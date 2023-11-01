@@ -57,11 +57,14 @@ global g_speech_recognized, g_speech_result
 global g_fd_results, n_prevTimeStamp
 global g_ssl_results
 global g_sst_az_list, g_sst_az_stream
+global g_start_time
 
 g_sst_az_list = []
 g_sst_az_stream = []
 lock_for_g_sst_az_list = Lock()
 verbose = 0   # 0 to disable print in process_ssl_sst_result,   1 to enable it
+
+global g_human
 
 
 MAX_ANGLE = 45*math.pi/180
@@ -76,7 +79,6 @@ def get_current_time() -> int:
     Returns:
         int: Current Time in MS.
     """
-
     return int(round(time.time() * 1000))
 
 def process_ssl_sst_result(result_str):
@@ -195,8 +197,8 @@ def listen_print_loop(responses, stream):
     num_chars_printed = 0
     transcript = "NULL"
     for response in responses:
-        if get_current_time() - stream.start_time > gcs_stt.STREAMING_LIMIT:
-            stream.start_time = get_current_time()
+        if stream.get_current_time() - stream.start_time > gcs_stt.STREAMING_LIMIT:
+            stream.start_time = stream.get_current_time()
             break
 
         if not response.results:
@@ -386,7 +388,10 @@ def face_detection(detector, cap, args):
             ssl_azimuth = ssl_result['azimuth']
             ang_diff = math.fabs(ssl_azimuth - img_ang)
             #print(f'ang_diff: {ang_diff*180/math.pi}, ANG_DIFF_TH: {ANG_DIFF_TH*180/math.pi}')
-            if ang_diff < ANG_DIFF_TH:
+            time_diff = get_current_time() - ssl_result['time']
+
+            TIME_DIFF_TH = 5000 # milisecond
+            if ang_diff < ANG_DIFF_TH and time_diff < TIME_DIFF_TH:
                 color = color_red
 
         cv2.circle(img, (img_center_x, img_center_y), 10, color,5)
@@ -416,7 +421,7 @@ def sst_check():
                         data_x = data[id]['x']
                         data_y = data[id]['y']
                         azimuth = math.atan2(data_y, data_x)
-                        ssl_result = {'azimuth': azimuth}
+                        ssl_result = {'azimuth': azimuth, 'time': get_current_time()}
                         ssl_results.append(ssl_result)
                         
                         sys.stdout.write(gcs_stt.GREEN)
@@ -442,7 +447,9 @@ if __name__ == "__main__":
     global g_speech_recognized, g_speech_result
     global g_fd_results, n_prevTimeStamp
     global g_ssl_results
+    global g_start_time
 
+    g_start_time = get_current_time()
 
     bOnline = True
     #test_conversations = []

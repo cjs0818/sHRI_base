@@ -57,16 +57,17 @@ RESET = "\033[0;0m"
 BOLD    = "\033[;1m"
 REVERSE = "\033[;7m"
 
-def get_current_time() -> int:
-    """Return Current Time in MS.
 
-    Returns:
-        int: Current Time in MS.
-    """
-
-    return int(round(time.time() * 1000))
 
 class MicrophoneStream(object):
+    def get_current_time() -> int:
+        """Return Current Time in MS.
+
+        Returns:
+            int: Current Time in MS.
+        """
+        return int(round(time.time() * 1000))
+
     """Opens a recording stream as a generator yielding the audio chunks."""
     def __init__(self, rate, chunk):
         self._rate = rate
@@ -77,7 +78,7 @@ class MicrophoneStream(object):
         self.closed = True
 
         # Newly added
-        self.start_time = get_current_time()
+        self.start_time = self.get_current_time()
         self.restart_counter = 0
         self.audio_input = []
         self.last_audio_input = []
@@ -141,6 +142,15 @@ class MicrophoneStream(object):
                     break
 
             yield b''.join(data)
+
+    def get_current_time(self) -> int:
+        """Return Current Time in MS.
+
+        Returns:
+            int: Current Time in MS.
+        """
+
+        return int(round(time.time() * 1000))
 
 
 def listen_print_loop(responses):
