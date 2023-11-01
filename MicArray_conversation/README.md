@@ -172,7 +172,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=/home/USERNAME/DOWNLOAD-FOLDER/gcloud-key-
 To run
 1. [Server] In one terminal, type
     ```
-    python sr_doa.py 2>/dev/null  
+    python main.py 2>/dev/null  
     ```
     Here '2>/dev/null' is used to disable ALSA warning messages
 

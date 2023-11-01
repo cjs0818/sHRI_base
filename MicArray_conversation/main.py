@@ -54,11 +54,21 @@ import time
 from text_classification import MachineLearning
 
 global g_speech_recognized, g_speech_result
+global g_fd_results, n_prevTimeStamp
+global g_ssl_results
+global g_sst_az_list, g_sst_az_stream
 
-sst_az_list = []
-sst_az_stream = []
-lock_for_sst_az_list = Lock()
+g_sst_az_list = []
+g_sst_az_stream = []
+lock_for_g_sst_az_list = Lock()
 verbose = 0   # 0 to disable print in process_ssl_sst_result,   1 to enable it
+
+
+MAX_ANGLE = 45*math.pi/180
+#MAX_ANGLE = 15*math.pi/180
+tan_MAX_ANGLE = math.tan(MAX_ANGLE)
+ANG_DIFF_TH = 20*math.pi/180
+#ANG_DIFF_TH = 10*math.pi/180
 
 def get_current_time() -> int:
     """Return Current Time in MS.
@@ -72,8 +82,8 @@ def get_current_time() -> int:
 def process_ssl_sst_result(result_str):
     # Parse the JSON data to extract relevant information
     try:
-        global sst_az_list
-        global sst_az_stream
+        global g_sst_az_list
+        global g_sst_az_stream
         global verbose
 
         data_stream = json.loads(result_str)
@@ -121,10 +131,10 @@ def process_ssl_sst_result(result_str):
                     if verbose:
                         print("   #------ sst : start ------#")
 
-                    lock_for_sst_az_list.acquire() 
-                    sst_az_list = data
-                    sst_az_stream = data_stream
-                    lock_for_sst_az_list.release()
+                    lock_for_g_sst_az_list.acquire() 
+                    g_sst_az_list = data
+                    g_sst_az_stream = data_stream
+                    lock_for_g_sst_az_list.release()
 
                     for id in range(len(data)):
                         if verbose:
@@ -305,8 +315,7 @@ def speech_recog():
             stream.new_stream = True
 
 
-if __name__ == "__main__":
-
+def init_fd(camera_idx):
     #------------------------------------------
     # Initialize for face detection
 
@@ -321,24 +330,139 @@ if __name__ == "__main__":
     args = ap.parse_args()
 
     # This is based on SSD deep learning pretrained model
-    detector = cv2.dnn.readNetFromCaffe(args.prototxt, args.model)
+    fd_detector = cv2.dnn.readNetFromCaffe(args.prototxt, args.model)
 
     #thread_fd = threading.Thread(target=fd.face_detection_realtime, args=(detector, args))
     #thread_fd.start()
 
-    # Feed from computer camera with threading
-    #camera_idx = 0
-    camera_idx = 1
     cap = video.VideoStream(camera_idx).start()
 
-    MAX_ANGLE = 45*math.pi/180
-    #MAX_ANGLE = 15*math.pi/180
-    tan_MAX_ANGLE = math.tan(MAX_ANGLE)
-    ANG_DIFF_TH = 20*math.pi/180
-    #ANG_DIFF_TH = 10*math.pi/180
-
-    global g_fd_results
+    return fd_detector, cap, args
     #------------------------------------------
+
+def face_detection(detector, cap, args):
+    global g_fd_results, g_ssl_results
+
+    #---------------------------
+    #--- face detection - start
+
+    # Getting out image frame by webcam
+    detected_l = []
+    
+    img = cap.read()
+
+    # https://docs.opencv.org/trunk/d6/d0f/group__dnn.html#ga29f34df9376379a603acd8df581ac8d7
+    inputBlob = cv2.dnn.blobFromImage(cv2.resize(
+        img, (300, 300)), 1, (300, 300), (104, 177, 123))
+
+    detector.setInput(inputBlob)
+    detections = detector.forward()
+    img, total_faces, detected_l = fd.find_faces(img, detections, args)
+
+    id = 0
+    g_fd_results = []
+    color_green = (0,255,0)
+    color_red = (0,0,255)
+    for detected in detected_l:
+        (x1,x2,y1,y2) = detected['box']
+
+        #face_roi = img[y1:y2, x1:x2]
+        #width = video_capture.get(cv2.CAP_PROP_FRAME_WIDTH)
+        (h, w) = img.shape[:2]
+        width = w
+        img_center_x = int((x1 + x2)/2)
+        img_center_y = int((y1 + y2)/2)
+        frame_center_x = width/2
+        ratio = frame_center_x - img_center_x
+        img_ang = math.atan(ratio/frame_center_x*tan_MAX_ANGLE)
+        detected['azimuth'] = img_ang
+        g_fd_results.append(detected)
+        #print(f'id: {id}, img_ang: {img_ang*180/math.pi},  detected_boxs: {(x1,x2,y1,y2)}')                  
+        id = id + 1
+
+        color = color_green
+        #print(g_ssl_results)
+        for ssl_result in g_ssl_results:
+            ssl_azimuth = ssl_result['azimuth']
+            ang_diff = math.fabs(ssl_azimuth - img_ang)
+            #print(f'ang_diff: {ang_diff*180/math.pi}, ANG_DIFF_TH: {ANG_DIFF_TH*180/math.pi}')
+            if ang_diff < ANG_DIFF_TH:
+                color = color_red
+
+        cv2.circle(img, (img_center_x, img_center_y), 10, color,5)
+
+    return img
+
+
+
+def sst_check():
+    global g_fd_results, n_prevTimeStamp
+    global g_sst_az_stream, g_sst_az_list
+
+    #print(g_sst_az_list)
+    data = g_sst_az_list
+    
+    ssl_results = []
+    if len(data) > 0 and n_prevTimeStamp != g_sst_az_stream['timeStamp']:
+        print(f" n_prevTimeStamp: {n_prevTimeStamp}, current timeStamp: {g_sst_az_stream['timeStamp']}")
+        n_prevTimeStamp = g_sst_az_stream['timeStamp']
+        if 'activity' in data[0]:    # sst
+            if data[0]['activity'] > 0:
+                print(" #---- sst ----#")
+
+                for id in range(len(data)):
+                    if data[id]['activity'] > 0:
+                        print(f"   sst: {data[id]}")
+                        data_x = data[id]['x']
+                        data_y = data[id]['y']
+                        azimuth = math.atan2(data_y, data_x)
+                        ssl_result = {'azimuth': azimuth}
+                        ssl_results.append(ssl_result)
+                        
+                        sys.stdout.write(gcs_stt.GREEN)
+                        sys.stdout.write("\033[K")
+                        print("   azimuth: {:.1f} degree".format(azimuth * 180/math.pi))
+                        sys.stdout.write(gcs_stt.RESET)
+                        sys.stdout.write("\033[K")
+
+                        id=0
+                        for detected in g_fd_results:
+                            (x1,x2,y1,y2) = detected['box']
+                            img_ang = detected['azimuth']
+                            #print(f'      id: {id}, img_ang: {img_ang*180/math.pi},  detected_boxs: {(x1,x2,y1,y2)}') 
+                            print(f'      id: {id}, img_ang: {img_ang*180/math.pi}') 
+                            id = id + 1
+    return ssl_results
+
+
+if __name__ == "__main__":
+
+    #-------------------------------------
+    # Initialize
+    global g_speech_recognized, g_speech_result
+    global g_fd_results, n_prevTimeStamp
+    global g_ssl_results
+
+
+    bOnline = True
+    #test_conversations = []
+    #test_conversations.append("그래. 무슨일이지?")
+    #test_labels = []
+    #for id in range(len(test_conversations)):
+    #    test_labels.append(0)   # forcing 0s because it's not important.
+    #ml.test(test_conversations, test_labels, bOnline)
+
+    n_prevTimeStamp = 0 # global
+    g_speech_result = 0 # global
+    g_ssl_results = []  # global
+    g_speech_recognized = "NULL"    # global
+
+    # Initialize for face detection
+    # camera index 0: internal camera, 1~: external camera
+    camera_idx = 0
+    #camera_idx = 1
+    fd_detector, cap, args = init_fd(camera_idx)
+    #-------------------------------------
 
 
 
@@ -364,6 +488,7 @@ if __name__ == "__main__":
     thread_gcs_stt = threading.Thread(target=speech_recog)
     thread_gcs_stt.daemon = True
     thread_gcs_stt.start()
+
     
     #dev = usb.core.find(idVendor=0x2886, idProduct=0x0018)
     #Mic_tuning = Tuning(dev)
@@ -381,76 +506,18 @@ if __name__ == "__main__":
     #BASE_PATH='/home/jschoi/work/sHRI_base/conversation/'
     ml = MachineLearning(BASE_PATH)
 
-    bOnline = True
-    #test_conversations = []
-    #test_conversations.append("그래. 무슨일이지?")
-    #test_labels = []
-    #for id in range(len(test_conversations)):
-    #    test_labels.append(0)   # forcing 0s because it's not important.
 
-    #ml.test(test_conversations, test_labels, bOnline)
-
-    n_prevTimeStamp = 0
-    g_speech_result = 0
-    g_ssl_results = []
-    g_speech_recognized = "NULL"
     while True:
         try:
+
             #---------------------------
-            #--- face detection - start
-
-            # Getting out image frame by webcam
-            detected_l = []
-            
-            img = cap.read()
-
-            # https://docs.opencv.org/trunk/d6/d0f/group__dnn.html#ga29f34df9376379a603acd8df581ac8d7
-            inputBlob = cv2.dnn.blobFromImage(cv2.resize(
-                img, (300, 300)), 1, (300, 300), (104, 177, 123))
-
-            detector.setInput(inputBlob)
-            detections = detector.forward()
-            img, total_faces, detected_l = fd.find_faces(img, detections, args)
-
-            id = 0
-            g_fd_results = []
-            color_green = (0,255,0)
-            color_red = (0,0,255)
-            for detected in detected_l:
-                (x1,x2,y1,y2) = detected['box']
-
-                #face_roi = img[y1:y2, x1:x2]
-                #width = video_capture.get(cv2.CAP_PROP_FRAME_WIDTH)
-                (h, w) = img.shape[:2]
-                width = w
-                img_center_x = int((x1 + x2)/2)
-                img_center_y = int((y1 + y2)/2)
-                frame_center_x = width/2
-                ratio = frame_center_x - img_center_x
-                img_ang = math.atan(ratio/frame_center_x*tan_MAX_ANGLE)
-                detected['azimuth'] = img_ang
-                g_fd_results.append(detected)
-                #print(f'id: {id}, img_ang: {img_ang*180/math.pi},  detected_boxs: {(x1,x2,y1,y2)}')                  
-                id = id + 1
-
-                color = color_green
-                for ssl_result in g_ssl_results:
-                    ssl_azimuth = ssl_result['azimuth']
-                    ang_diff = math.fabs(ssl_azimuth - img_ang)
-                    #print(f'ang_diff: {ang_diff*180/math.pi}, ANG_DIFF_TH: {ANG_DIFF_TH*180/math.pi}')
-                    if ang_diff < ANG_DIFF_TH:
-                        color = color_red
-
-                cv2.circle(img, (img_center_x, img_center_y), 10, color,5)
-
+            #--- face detection
+            img = face_detection(fd_detector, cap, args)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
-
             cv2.imshow("Face Detection with SSD", img)
-            #--- face detection - end
             #---------------------------
             
-
 
             '''
             with sr.Microphone() as source:
@@ -479,7 +546,8 @@ if __name__ == "__main__":
                 #print("Google Cloud Speech thinks you said " + test_conversations[0])
                 #print("Speaker Direction : {}".format(Mic_tuning.direction))
 
-
+                #---------------------------
+                #--- classification
                 classification = ml.test(test_conversations, test_labels, bOnline)
                 id = 0
                 print(" #---- sc ----#")
@@ -496,42 +564,13 @@ if __name__ == "__main__":
 
                 sys.stdout.write(gcs_stt.RESET)
                 sys.stdout.write("\033[K")
+                #---------------------------
 
-                #print(sst_az_list)
-                data = sst_az_list
-                
-                if len(data) > 0 and n_prevTimeStamp != sst_az_stream['timeStamp']:
-                    print(f" n_prevTimeStamp: {n_prevTimeStamp}, current timeStamp: {sst_az_stream['timeStamp']}")
-                    n_prevTimeStamp = sst_az_stream['timeStamp']
-                    if 'activity' in data[0]:    # sst
-                        if data[0]['activity'] > 0:
-                            print(" #---- sst ----#")
+                #---------------------------
+                #--- sound source tracking (DoA)
+                g_ssl_results = sst_check()
+                #---------------------------
 
-                            sys.stdout.write(gcs_stt.GREEN)
-                            sys.stdout.write("\033[K")
-
-                            for id in range(len(data)):
-                                if data[id]['activity'] > 0:
-                                    print(f"   sst: {data[id]}")
-                                    data_x = data[id]['x']
-                                    data_y = data[id]['y']
-                                    azimuth = math.atan2(data_y, data_x)
-                                    ssl_result = {'azimuth': azimuth}
-                                    g_ssl_results.append(ssl_result)
-                                    print("   azimuth: {:.1f} degree".format(azimuth * 180/math.pi))
-
-                                    id=0
-                                    for detected in detected_l:
-                                        (x1,x2,y1,y2) = detected['box']
-                                        img_ang = detected['azimuth']
-                                        print(f'id: {id}, img_ang: {img_ang*180/math.pi},  detected_boxs: {(x1,x2,y1,y2)}') 
-                                        id = id + 1
-
-                            sys.stdout.write(gcs_stt.RESET)
-                            sys.stdout.write("\033[K")
-
-
-                #print("\n")
                 print("Say something!")
                     
 
@@ -542,4 +581,5 @@ if __name__ == "__main__":
 
 
     cv2.destroyAllWindows()
-    cap.stop()        
+    cap.stop()   
+     
