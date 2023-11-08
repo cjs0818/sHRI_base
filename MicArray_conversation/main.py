@@ -24,16 +24,23 @@ import math
 
 # For stt
 import speech_recognition as sr
-global BASE_PATH
+global BASE_PATH, BASE_PATH_conversation
 
 if sys.platform == "linux" or sys.platform == "linux2":
-    BASE_PATH = '/home/jschoi/work/sHRI_base/conversation/' # for Linux
+#    BASE_PATH = '/home/jschoi/work/sHRI_base' # for Linux
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/home/jschoi/work/sHRI_base/MicArray_conversation/STT/cjsstt.json'
 #    os.environ["PYTHONPATH"] = '/home/jschoi/work/sHRI_base:$PYTHONPATH'
 elif sys.platform == "darwin":
-    BASE_PATH='/Users/jschoi/work/sHRI_base/conversation/' # for macOS 
+#    BASE_PATH='/Users/jschoi/work/sHRI_base' # for macOS 
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/Users/jschoi/work/sHRI_base/MicArray_conversation/STT/cjsstt.json'
 #    os.environ["PYTHONPATH"] = '/Users/jschoi/work/sHRI_base:$PYTHONPATH'
+BASE_PATH = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+BASE_PATH_conversation = BASE_PATH + "/conversation/"
+
+print(BASE_PATH)
+sys.path.append(BASE_PATH+"/MicArray_conversation/FR")
+
+
 import STT.gcs_stt as gcs_stt
 from google.cloud import speech
 import re
@@ -43,6 +50,13 @@ import FR.fd as fd
 import argparse
 import cv2
 from imutils import face_utils, video
+
+#-----------------------------
+# For Face Interaction (FI)
+from FR.face_interaction import FI
+# ----------------------------
+
+
 
 
 from tuning import Tuning
@@ -400,8 +414,6 @@ def face_detection(detector, cap, args):
 
     return img
 
-
-
 def sst_check(g_speech_recognized):
     global g_fd_results, n_prevTimeStamp
     global g_sst_az_stream, g_sst_az_list, g_azimuth_offset
@@ -479,6 +491,7 @@ if __name__ == "__main__":
 
     g_azimuth_offset = 0
 
+
     # Initialize for face detection
     # camera index 0: internal camera, 1~: external camera
     camera_idx = 0
@@ -486,6 +499,11 @@ if __name__ == "__main__":
     fd_detector, cap, args = init_fd(camera_idx)
     #-------------------------------------
 
+    '''
+    #camera_idx = 0
+    #cap = cv2.VideoCapture(camera_idx)
+    #fi = FI(BASE_PATH+"/MicArray_conversation/FR", cap)    # Face Interaction Class
+    '''
 
 
     # Replace "ODAS_SERVER_IP" and "ODAS_SERVER_PORT" with the desired IP and port for the server
@@ -526,12 +544,11 @@ if __name__ == "__main__":
 
     # text_classification
     #BASE_PATH='/home/jschoi/work/sHRI_base/conversation/'
-    ml = MachineLearning(BASE_PATH)
+    ml = MachineLearning(BASE_PATH_conversation)
 
 
     while True:
         try:
-
             #---------------------------
             #--- face detection
             img = face_detection(fd_detector, cap, args)
@@ -539,21 +556,15 @@ if __name__ == "__main__":
                 break
             cv2.imshow("Face Detection with SSD", img)
             #---------------------------
-            
 
             '''
-            with sr.Microphone() as source:
-                #r.adjust_for_ambient_noise(source)
-                print("Say something!")
-                audio = r.listen(source)
-
-            test_conversations = []
-
-            # Google Cloud Speech-to-Text
-            test_conversations.append(r.recognize_google_cloud(audio, language="ko-KR", credentials_json=os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')))
-
-            # Google web speech API
-            #test_conversations.append(r.recognize_google(audio, language="ko-KR"))
+            #---------------------------
+            #--- face detection
+            frame = fi.run()
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+            cv2.imshow("Face Detection with SSD", frame)
+            #---------------------------
             '''
 
             if g_speech_result:
