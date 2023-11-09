@@ -56,7 +56,14 @@ from imutils import face_utils, video
 from FR.face_interaction import FI
 # ----------------------------
 
-
+# ----------------------------
+# Head Pose detection: by Dlib:
+#   hp_detection.py
+#   You can download a trained facial shape predictor from:
+#    http://sourceforge.net/projects/dclib/files/dlib/v18.10/shape_predictor_68_face_landmarks.dat.bz2
+from hp_detection import HeadPose
+import dlib     # used for Face detection by Dlib
+import numpy as np
 
 
 from tuning import Tuning
@@ -355,10 +362,17 @@ def init_fd(camera_idx):
 
     cap = video.VideoStream(camera_idx).start()
 
-    return fd_detector, cap, args
+    # ----------------------------
+    # Head Pose Detection: by Dlib
+    sample_frame = cap.read()
+    path = BASE_PATH + "/MicArray_conversation/FR"
+    predictor_path = "./FR/shape_predictor_68_face_landmarks_GTX.dat"
+    hpd = HeadPose(sample_frame, path, predictor_path)
+
+    return fd_detector, cap, args, hpd
     #------------------------------------------
 
-def face_detection(detector, cap, args):
+def face_detection(detector, cap, args, hpd):
     global g_fd_results, g_ssl_results
 
     #---------------------------
@@ -383,6 +397,40 @@ def face_detection(detector, cap, args):
     color_red = (0,0,255)
     for detected in detected_l:
         (x1,x2,y1,y2) = detected['box']
+
+        '''
+        # ---------------------------------
+        # Head Pose Estimation
+
+        # Get the landmarks/parts for the face in box d.
+        rect = dlib.rectangle(x1, y1, x2, y2) 
+        shape = hpd.predictor(img, rect)
+        #print("Part 0: {}, Part 1: {} ...".format(shape.part(0), shape.part(1)))
+
+        # Find Head Pose using the face landmarks and Draw them on the screen.
+        (p1, p2) = hpd.draw_landmark_headpose(img, shape)
+        roi_ratio = (rect.right() - rect.left()) / img.shape[0]
+
+        dist = np.subtract(p2, p1)
+        dist = np.sqrt(np.dot(dist, dist))
+        dist_ratio = dist / (rect.right() - rect.left())
+
+ 
+        #cv2.circle(img, p1, 10, (0, 0, 255), -1)
+        #cv2.circle(img, p2, 10, (0, 0, 255), -1)
+        #print(f"rect.right(): {rect.right()}, rect.left():{rect.left()}")
+
+        roi_ratio_th = 0.15 # 0.15
+        dist_ratio_th = 1.25 #0.75  # 0.03
+        #print(" ")
+        #print("roi_ratio: %3.2f, dist_ratio: %5.4f" % (roi_ratio, dist_ratio))
+        if roi_ratio > roi_ratio_th and dist_ratio < dist_ratio_th:
+            cv2.line(img, p1, p2, (0, 0, 255), 2)   # Red
+        else:
+            cv2.line(img, p1, p2, (0, 255, 0), 2)   # Green
+        # ---------------------------------
+        '''
+
 
         #face_roi = img[y1:y2, x1:x2]
         #width = video_capture.get(cv2.CAP_PROP_FRAME_WIDTH)
@@ -496,7 +544,7 @@ if __name__ == "__main__":
     # camera index 0: internal camera, 1~: external camera
     camera_idx = 0
     #camera_idx = 1
-    fd_detector, cap, args = init_fd(camera_idx)
+    fd_detector, cap, args, hpd = init_fd(camera_idx)
     #-------------------------------------
 
     '''
@@ -551,7 +599,7 @@ if __name__ == "__main__":
         try:
             #---------------------------
             #--- face detection
-            img = face_detection(fd_detector, cap, args)
+            img = face_detection(fd_detector, cap, args, hpd)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
             cv2.imshow("Face Detection with SSD", img)
