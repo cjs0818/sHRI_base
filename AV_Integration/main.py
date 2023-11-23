@@ -54,6 +54,10 @@ from imutils import face_utils, video
 from FR.face_interaction import FI
 # ----------------------------
 
+#-----------------------------
+# For Head Pose Detection
+from FR.hp_detection import HeadPose
+
 
 import usb.core
 import usb.util
@@ -356,6 +360,7 @@ def init_fd(camera_idx):
 def face_detection(detector, cap, args):
     global g_fd_results, g_ssl_results
 
+
     #---------------------------
     #--- face detection - start
 
@@ -364,6 +369,16 @@ def face_detection(detector, cap, args):
     
     img = cap.read()
 
+    '''
+    # ----------------------------
+    # Head Pose Detection: by Dlib
+    path = BASE_PATH + "/AV_Integration/FR"
+    predictor_path = path + "/shape_predictor_68_face_landmarks_GTX.dat"
+    #predictor = dlib.shape_predictor(predictor_path)
+    hpd = HeadPose(img, path, predictor_path)
+    # ----------------------------
+    '''
+    
     # https://docs.opencv.org/trunk/d6/d0f/group__dnn.html#ga29f34df9376379a603acd8df581ac8d7
     inputBlob = cv2.dnn.blobFromImage(cv2.resize(
         img, (300, 300)), 1, (300, 300), (104, 177, 123))
