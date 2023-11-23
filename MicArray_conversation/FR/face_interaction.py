@@ -6,10 +6,8 @@
 # 1. In one terminal, run
 #    $ python sr_doa.py 2>/dev/null  # Here '2>/dev/null' is used to disable ALSA warning messages
 #
-# 2. In the other terminal, move to the folder where odaslive execution exists
-#     (~/work/sHRI_base/MicArray_conversion/odas/build/bin)
-#    Then, run
-#   $ ./odaslive -c ~/work/sHRI_base/MicArray_conversation/odas/odas.cfg 
+# 2. Then, run
+#   $ ./odas/build/bin/odaslive -c ./odas/odas.cfg 
 
 import sys
 import os

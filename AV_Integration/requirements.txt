@@ -1,0 +1,49 @@
+tensorflow
+pyusb==1.0.2
+click==7.0
+
+# You need to install swig as 'sudo apt install swig'
+pocketsphinx  # sudo pip install pocketsphinx
+webrtcvad
+
+
+# You need to install portaudio19-dev first as 'sudo apt-get install portaudio19-dev' for installing pyaudio
+pyaudio   # error in osx
+# In OSX
+#brew install portaudio flac
+
+
+
+respeaker
+google-cloud-speech
+SpeechRecognition
+hidapi # This is optional
+
+numpy
+
+# For text_classification
+transformers==4.30.2
+torch==2.0.1
+scikit-learn
+pandas
+
+# For face recognition
+face_recognition
+opencv-python
+
+# For face detection
+imutils
+dlib
+opencv-python
+opencv-contrib-python
+
+# For tts
+gTTS
+
+
+# For dialogue
+#Flask
+#google-cloud-dialogflow
+
+# For ChatGPT
+openai

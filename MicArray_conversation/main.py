@@ -6,10 +6,8 @@
 # 1. In one terminal, run
 #    $ python sr_doa.py 2>/dev/null  # Here '2>/dev/null' is used to disable ALSA warning messages
 #
-# 2. In the other terminal, move to the folder where odaslive execution exists
-#     (~/work/sHRI_base/MicArray_conversion/odas/build/bin)
-#    Then, run
-#   $ ./odaslive -c ~/work/sHRI_base/MicArray_conversation/odas/odas.cfg 
+# 2. Then, run
+#   $ ./odas/build/odaslive -v -c ./odas/odas.cfg 
 
 import sys
 import os
@@ -59,7 +57,6 @@ from FR.face_interaction import FI
 
 
 
-from tuning import Tuning
 import usb.core
 import usb.util
 import time
@@ -491,7 +488,7 @@ if __name__ == "__main__":
 
     g_azimuth_offset = 0
 
-
+    
     # Initialize for face detection
     # camera index 0: internal camera, 1~: external camera
     camera_idx = 0
@@ -500,11 +497,10 @@ if __name__ == "__main__":
     #-------------------------------------
 
     '''
-    #camera_idx = 0
-    #cap = cv2.VideoCapture(camera_idx)
-    #fi = FI(BASE_PATH+"/MicArray_conversation/FR", cap)    # Face Interaction Class
+    camera_idx = 0
+    cap = cv2.VideoCapture(camera_idx)
+    fi = FI(BASE_PATH+"/MicArray_conversation/FR", cap)    # Face Interaction Class
     '''
-
 
     # Replace "ODAS_SERVER_IP" and "ODAS_SERVER_PORT" with the desired IP and port for the server
     #odas_server_ip = "192.168.1.6"
@@ -529,10 +525,6 @@ if __name__ == "__main__":
     thread_gcs_stt.daemon = True
     thread_gcs_stt.start()
 
-    
-    #dev = usb.core.find(idVendor=0x2886, idProduct=0x0018)
-    #Mic_tuning = Tuning(dev)
-    #print(Mic_tuning.direction)
 
     # obtain audio from the microphone
     r = sr.Recognizer()
@@ -549,6 +541,7 @@ if __name__ == "__main__":
 
     while True:
         try:
+            
             #---------------------------
             #--- face detection
             img = face_detection(fd_detector, cap, args)
@@ -566,6 +559,7 @@ if __name__ == "__main__":
             cv2.imshow("Face Detection with SSD", frame)
             #---------------------------
             '''
+            
 
             if g_speech_result:
                 g_speech_result = 0
@@ -614,5 +608,8 @@ if __name__ == "__main__":
 
 
     cv2.destroyAllWindows()
-    cap.stop()   
+    try:
+        cap.stop()
+    except:
+        pass
      
