@@ -55,8 +55,11 @@ from action_detect import Event_Detector
 
 class FI():  # Face Interaction Class
     def __init__(self, path, cap):
-        cap.set(3, 320)
-        cap.set(4, 240)
+        #cap.set(3, 320)
+        #cap.set(4, 240)
+
+        cap.set(3, 640)
+        cap.set(4, 480)
 
         ret, sample_frame = cap.read()
 
@@ -233,7 +236,7 @@ class FI():  # Face Interaction Class
             dist_ratio = dist / (d.right() - d.left())
 
             roi_ratio_th = 0.15
-            dist_ratio_th = 0.75  # 0.03
+            dist_ratio_th = 0.75  # 0.75 <- 0.03
             #print(" ")
             #print("roi_ratio: %3.2f, dist_ratio: %5.4f" % (roi_ratio, dist_ratio))
             if roi_ratio > roi_ratio_th and dist_ratio < dist_ratio_th:

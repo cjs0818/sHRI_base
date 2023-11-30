@@ -387,6 +387,49 @@ def face_detection(detector, cap, args):
     detections = detector.forward()
     img, total_faces, detected_l = fd.find_faces(img, detections, args)
 
+
+    '''
+    fr_box = []
+    for detected in detected_l:
+    
+    dets = self.detector(frame, 1)  # <-  fr_dlib.py, rect
+    for k, d in enumerate(dets):
+        fr_box.append(d)
+
+
+    # compute the (x, y)-coordinates of the bounding box for the
+    # object
+    for i in range(0, detections.shape[2]):
+        box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+        (x1, y1, x2, y2) = box.astype("int")
+
+        
+
+        # Get the landmarks/parts for the face in box d.
+        d = fr_box[max_width_id]
+    
+        shape = hpd.predictor(frame, d)    # predict 68_face_landmarks
+        #print("Part 0: {}, Part 1: {} ...".format(shape.part(0), shape.part(1)))
+
+        # Find Head Pose using the face landmarks and Draw them on the screen.
+        (p1, p2) = hpd.draw_landmark_headpose(frame, shape)
+        roi_ratio = (d.right() - d.left()) / frame.shape[0]
+
+        dist = np.subtract(p2, p1)
+        dist = np.sqrt(np.dot(dist, dist))
+        dist_ratio = dist / (d.right() - d.left())
+
+        roi_ratio_th = 0.15
+        dist_ratio_th = 0.75  # 0.75 <- 0.03
+        #print(" ")
+        #print("roi_ratio: %3.2f, dist_ratio: %5.4f" % (roi_ratio, dist_ratio))
+        if roi_ratio > roi_ratio_th and dist_ratio < dist_ratio_th:
+            cv2.line(frame, p1, p2, (0, 0, 255), 2)
+        else:
+            cv2.line(frame, p1, p2, (0, 255, 0), 2)
+            
+    '''
+
     id = 0
     g_fd_results = []
     color_green = (0,255,0)
@@ -501,19 +544,24 @@ if __name__ == "__main__":
 
     g_azimuth_offset = 0
 
-    
+
+    #------------------------------------
     # Initialize for face detection
     # camera index 0: internal camera, 1~: external camera
-    camera_idx = 0
-    #camera_idx = 1
-    fd_detector, cap, args = init_fd(camera_idx)
-    #-------------------------------------
 
     '''
     camera_idx = 0
+    #camera_idx = 1
+    fd_detector, cap, args = init_fd(camera_idx)
+    '''
+
+    camera_idx = 0
     cap = cv2.VideoCapture(camera_idx)
     fi = FI(BASE_PATH+"/AV_Integration/FR", cap)    # Face Interaction Class
-    '''
+
+     #------------------------------------
+
+
 
     # Replace "ODAS_SERVER_IP" and "ODAS_SERVER_PORT" with the desired IP and port for the server
     #odas_server_ip = "192.168.1.6"
@@ -554,7 +602,7 @@ if __name__ == "__main__":
 
     while True:
         try:
-            
+            '''
             #---------------------------
             #--- face detection
             img = face_detection(fd_detector, cap, args)
@@ -564,15 +612,17 @@ if __name__ == "__main__":
             #---------------------------
 
             '''
+            
+            
             #---------------------------
-            #--- face detection
+            #--- face interaction
             frame = fi.run()
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
-            cv2.imshow("Face Detection with SSD", frame)
+            cv2.imshow("Face Interaction with SSD", frame)
             #---------------------------
-            '''
             
+
 
             if g_speech_result:
                 g_speech_result = 0
