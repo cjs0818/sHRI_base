@@ -48,7 +48,7 @@ pip install -r requirements.txt
   
 ### If the 'usb' module is not installed correctly, install it manually.
 ```
-sudo pip3 install pyusb
+sudo pip install pyusb      # sudo apt install python3-usb    # in Raspberrypi5
 ```
 
 ## How to run
