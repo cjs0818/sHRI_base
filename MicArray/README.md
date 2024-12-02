@@ -26,7 +26,7 @@ sudo reboot
 The Microphone Array supports USB DFU. We have [a python script - dfu.py](https://github.com/WoongDemianPark/HRI/blob/main/MicArray/dfu.py) to do that.
 
 ```
-pip install pyusb
+pip install pyusb      # sudo apt install python3-usb    # in Raspberrypi5
 python3 dfu.py --download 6_channels_firmware.bin        # with sudo if usb permission error
 ```
 
